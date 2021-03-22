@@ -1,4 +1,4 @@
-function [setX, setY] = getXYforTrackforTrackList(trackList, directory, featureSpec)
+function [setX, setY] = getXYfromTrackList(trackList, directory, featureSpec)
 
     % Appending is expensive but pre-allocating space, at least for this
     % few data is not worth it

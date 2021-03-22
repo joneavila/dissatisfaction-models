@@ -7,7 +7,8 @@ function [X, y] = getXYforTrack(dialogFilename, directory, featureSpec)
 
     % get the monster
     customerSide = 'l';
-    dialogDirectory = 'C:\Users\nullv\OneDrive\Documents\GitHub\knn-models\calls\';
+    dialogDirectory = append(directory, "\calls\");
+    dialogDirectory = convertStringsToChars(dialogDirectory);
     trackSpec = makeTrackspec(customerSide, dialogFilename, dialogDirectory);
     [~, monster] = makeTrackMonster(trackSpec, featureSpec);
     

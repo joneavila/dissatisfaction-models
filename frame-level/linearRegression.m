@@ -4,22 +4,24 @@
 addpath(genpath('midlevel-master'));
 addpath(genpath('calls'));
 
+directory = 'C:\Users\nullv\OneDrive\Documents\GitHub\dissatisfaction-models\';
+
 % get feature spec (mono.fss)
-featureSpec = getfeaturespec('mono.fss');
-directory = 'C:\Users\nullv\OneDrive\Documents\GitHub\knn-models\';
+featureSpec = getfeaturespec(append(directory, "mono.fss"));
+
 
 % get the track lists
-trackListTrain = gettracklist("train.tl");
-trackListDev = gettracklist("dev.tl");
+trackListTrain = gettracklist(append(directory, "frame-level\train.tl"));
+trackListDev = gettracklist(append(directory, "frame-level\dev.tl"));
 
 % get X (monster regions) and Y (labels)
-[Xtrain, yTrain] = getXYforTrackforTrackList(trackListTrain, directory, featureSpec);
-[Xdev, yDev] = getXYforTrackforTrackList(trackListDev, directory, featureSpec);
+[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, directory, featureSpec);
+[Xdev, yDev] = getXYfromTrackList(trackListDev, directory, featureSpec);
 
-model = fitlm(Xtrain, yTrain);
+%%
+linearModel = fitlm(Xtrain, yTrain);
 
-%% 
-coefficients = model.Coefficients.Estimate;
+coefficients = linearModel.Coefficients.Estimate;
 
 [coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
 nCoeffPrint = 5;

@@ -1,4 +1,4 @@
-../calls/
+./calls/
 # see frame-level-splits.txt
 # dev set positive (3 dialogs)
 l 20210204-jl-5eb5c2051cabb149a0636117-magician-n-n.wav
