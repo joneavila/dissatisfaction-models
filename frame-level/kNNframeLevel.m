@@ -13,8 +13,8 @@ trackListTrain = gettracklist("train.tl");
 trackListDev = gettracklist("dev.tl");
 
 % get X (monster regions) and Y (labels)
-[Xtrain, yTrain] = getXYforTrackforTrackList(trackListTrain, dirWorking, featureSpec);
-[Xdev, yDev] = getXYforTrackforTrackList(trackListDev, dirWorking, featureSpec);
+[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, dirWorking, featureSpec);
+[Xdev, yDev] = getXYfromTrackList(trackListDev, dirWorking, featureSpec);
 
 % train
 model = fitcknn(Xtrain, yTrain);
