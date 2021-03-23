@@ -6,15 +6,15 @@ addpath(genpath('calls'));
 
 % get feature spec (mono.fss)
 featureSpec = getfeaturespec('mono.fss');
-directory = 'C:\Users\nullv\OneDrive\Documents\GitHub\knn-models\';
+dirWorking = append(pwd, "\");
 
 % get the track lists
 trackListTrain = gettracklist("train.tl");
 trackListDev = gettracklist("dev.tl");
 
 % get X (monster regions) and Y (labels)
-[Xtrain, yTrain] = getXYforTrackforTrackList(trackListTrain, directory, featureSpec);
-[Xdev, yDev] = getXYforTrackforTrackList(trackListDev, directory, featureSpec);
+[Xtrain, yTrain] = getXYforTrackforTrackList(trackListTrain, dirWorking, featureSpec);
+[Xdev, yDev] = getXYforTrackforTrackList(trackListDev, dirWorking, featureSpec);
 
 % train
 model = fitcknn(Xtrain, yTrain);
