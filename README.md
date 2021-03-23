@@ -1,23 +1,24 @@
 # Models for detecting dissatisfaction in dialog
 
-## Repo contents
+## Contents
 
 - `dialog-level` - dialog-level k-NN model
-- `frame-level` - frame-level k-NN model
-- `linear-regression` - linear regression model
-- `mono.fss` feature specification file with X features, used in previous work *here*
+- `frame-level` - frame-level k-NN model and linear regression model
 
 ## Set up
 
 1. Download The UTEP Corpus of Dissatisfaction in Spoken Dialog at <https://github.com/joneavila/utep-dissatisfaction-corpus>. Place the `calls` folder and `call-log.xlsx` in the root of this project.
 1. Download Midlevel Prosodic Features Toolkit at <https://github.com/nigelgward/midlevel>. Place the `midlevel-master` folder in the root of this project.
 1. Download annotations `ja-annotations` and place the folder in the root of this project. This is necessary for the frame-level model only.
+1. Clone this repo or download it as a ZIP and extract. Open the `dissatisfaction-models` in MATLAB and add the folder and its subfolders to Path.
 
 ## Frame-level k-NN model
 
-Predictions are on single frames (10ms). Reads labels from annotator `ja`. Utterances were labeled as `d`, `dd`, `n`, `nn`, `o`, and `?` (for more, see annotation guidelines). To predict disappointment on a scale from 0 to 1, `n` or `nn` are treated as 0 and `d` or `dd` are treated as 1
+Predictions are on single frames (10ms). Reads labels from annotator `ja`. Utterances were labeled as `d`, `dd`, `n`, `nn`, `o`, and `?` (for more, see annotation guidelines). To predict disappointment on a scale from 0 to 1, `n` or `nn` are read as 0 and `d` or `dd` are read as 1. To run from MATLAB,
 
-To run, open `knn-models` in MATLAB and run `kNNframeLevel.m`.
+```MATLAB
+kNNframeLevel
+```
 
 ## Linear regression model
 
@@ -40,10 +41,16 @@ Corresponding features from `mono.fss`:
 1. `cr   800 to  1600 self` (creaky, feature 30)
 1. `cr -1600 to  -800 self` (creaky, feature 17)
 
-To run, open `knn-models` in MATLAB and run `linearRegression.m`.
+To run from MATLAB,
+
+```MATLAB
+linearRegression
+```
 
 ## Dialog-level k-NN model
 
-This code needs some tweaking after I moved some files around.
+(This code needs some tweaking after I moved some files around.) To run from MATLAB,
 
-To run, open `knn-models` in MATLAB and run `kNNdialogLevel.m`.
+```MATLAB
+kNNdialogLevel
+```
