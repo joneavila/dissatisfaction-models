@@ -13,14 +13,14 @@ trackListTrain = gettracklist("train.tl");
 trackListDev = gettracklist("dev.tl");
 
 % get X (monster regions) and Y (labels)
-[Xtrain, Ytrain] = getXYforTrackforTrackList(trackListTrain, directory, featureSpec);
-[Xdev, Ydev] = getXYforTrackforTrackList(trackListDev, directory, featureSpec);
+[Xtrain, yTrain] = getXYforTrackforTrackList(trackListTrain, directory, featureSpec);
+[Xdev, yDev] = getXYforTrackforTrackList(trackListDev, directory, featureSpec);
 
 % train
-model = fitcknn(Xtrain, Ytrain);
+model = fitcknn(Xtrain, yTrain);
 
 % predict on each frame in dev set (~1min)
-predictions = predict(model, Xdev);
+yPred = predict(model, Xdev);
 
 % count tp, fp, fn, and tn
 % positive class is "d" or "dd", negative class is "n" or "nn"
@@ -31,8 +31,8 @@ fn = 0;
 tn = 0;
 for i = 1:size(Xdev, 1)
     
-    labelPredicted = predictions(i);
-    labelActual = Ydev(i);
+    labelPredicted = yPred(i);
+    labelActual = yDev(i);
     
     if labelPredicted == 1
         if labelActual == 1
@@ -61,5 +61,5 @@ fScore = ((beta^2 + 1) * precision * recall) / (beta^2 * precision + recall);
 disp(['F-score = ', num2str(fScore)]);
 
 % calculate mean absolute error
-mae = mean(abs(predictions - Ydev));
+mae = mean(abs(yPred - yDev));
 disp(['Mean Absolute Error = ', num2str(mae)]);
