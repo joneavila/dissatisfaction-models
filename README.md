@@ -25,21 +25,23 @@ kNNframeLevel
 Reads labels from annotator `ja`. Output:
 
 ```MATLAB
-Sorted coefficients in descending order. First 5 coefficients:
- Coefficient 18 with value 1.031855
- Coefficient 31 with value 0.760532
- Coefficient 19 with value 0.426020
- Coefficient 30 with value 0.424840
- Coefficient 17 with value 0.154492
+Sorted coefficients in descending order with format: coefficient, value, abbreviation
+17 | 1.031855 | se cr -1600 -800
+30 | 0.760532 | se cr  +800  +1600
+18 | 0.426020 | se cr -800 -400
+29 | 0.424840 | se cr  +400  +800
+16 | 0.154492 | se vo  +1600  +3200
+...
+57 | -0.363121 | se th  +400  +800
+44 | -0.431529 | se tl  +800  +1600
+31 | -0.499117 | se tl -1600 -800
+45 | -0.504644 | se th -1600 -800
+58 | -0.955588 | se th  +800  +1600
 ```
 
-Corresponding features from `mono.fss`:
-
-1. `cr  -800 to  -400 self` (creaky, feature 18)
-1. `tl -1600 to  -800 self` (pitch lowness, feature 31)
-1. `cr  -400 to  -300 self` (creaky, feature 19)
-1. `cr   800 to  1600 self` (creaky, feature 30)
-1. `cr -1600 to  -800 self` (creaky, feature 17)
+```MATLAB
+Mean Absolute Error = 0.45244
+```
 
 To run from MATLAB,
 

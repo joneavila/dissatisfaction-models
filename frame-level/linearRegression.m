@@ -24,13 +24,16 @@ model = fitlm(Xtrain, yTrain);
 % print coefficient info
 coefficients = model.Coefficients.Estimate;
 
+% the first coefficient is the intercept
+coefficients(1) = [];
+
 [coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
-nCoeffPrint = 5;
-fprintf('Sorted coefficients in descending order. First %d coefficients:\n', nCoeffPrint);
-for nCoeff = 1:nCoeffPrint
+disp('Sorted coefficients in descending order with format: coefficient, value, abbreviation');
+for nCoeff = 1:length(coefficients)
     coeff = coeffSortedIdx(nCoeff);
     coeffValue = coefficientSorted(nCoeff);
-    fprintf('\tCoefficient %d with value %f\n', coeff, coeffValue);
+    feature = featureSpec(coeff);
+    fprintf('%2d | %f | %s\n', coeff, coeffValue, feature.abbrev);
 end
 
 % predict on the dev set
