@@ -54,3 +54,11 @@ linearRegression
 ```MATLAB
 kNNdialogLevel
 ```
+
+## T-test
+
+A two-sample t-test to test the hypothesis that data from neutral frames and data from dissatisfied frames come from populations with unequal means, i.e. test whether each feature is significantly different between neutral frames and dissatisfied frames. To run from MATLAB,
+
+```MATLAB
+tTest
+```
