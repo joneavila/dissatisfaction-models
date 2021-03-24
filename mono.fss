@@ -1,8 +1,4 @@
-# mono.fss
-# Nigel Ward, UTEP, October 2015
-# just the one half of april.fss
-
-# Downloaded from http://www.cs.utep.edu/nigel/stance/mono.fss
+# From http://www.cs.utep.edu/nigel/stance/mono.fss
 
 ### Self Features
 ## volume 
@@ -40,7 +36,7 @@ cr   200 to   300 self
 cr   300 to   400 self
 cr   400 to   800 self
 cr   800 to  1600 self
-#
+
 ### pitch lowness
 tl -1600 to  -800 self
 tl  -800 to  -400 self
