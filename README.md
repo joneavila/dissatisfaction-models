@@ -73,6 +73,19 @@ linearRegression
 kNNdialogLevel
 ```
 
+## Histograms
+
+Save a histogram for each feature used in the train and dev set. Save histograms
+to `frame-level/images`. Here's an example,
+
+![Histogram for Feature 15 "se vo +800 +1600" neutral train+dev, nBins=30](images/histogram.png)
+
+To run from MATLAB,
+
+```MATLAB
+visualize
+```
+
 ## T-test
 
 A two-sample t-test to test the hypothesis that data from neutral frames and
