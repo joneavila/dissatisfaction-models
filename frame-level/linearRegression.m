@@ -21,21 +21,21 @@ trackListDev = gettracklist(append(dirWorking, "frame-level\dev.tl"));
 % train
 model = fitlm(Xtrain, yTrain);
 %%
-% print coefficient info
+% save coefficient info to a text file
+outputFilename = 'coefficients.txt';
+fileID = fopen(outputFilename, 'w');
 coefficients = model.Coefficients.Estimate;
-
-% the first coefficient is the intercept
-coefficients(1) = [];
-
+coefficients(1) = []; % discard the first coefficient (intercept)
 [coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
-disp('Sorted coefficients in descending order with format: coefficient, value, abbreviation');
-for nCoeff = 1:length(coefficients)
-    coeff = coeffSortedIdx(nCoeff);
-    coeffValue = coefficientSorted(nCoeff);
-    feature = featureSpec(coeff);
-    fprintf('%2d | %f | %s\n', coeff, coeffValue, feature.abbrev);
+fprintf(fileID,'Sorted coefficients in descending order with format: coefficient, value, abbreviation\n');
+for coeffNum = 1:length(coefficients)
+    coeff = coeffSortedIdx(coeffNum);
+    coeffValue = coefficientSorted(coeffNum);
+    spec = featureSpec(coeff);
+    fprintf(fileID, '%2d | %f | %s\n', coeff, coeffValue, spec.abbrev);
 end
-
+fclose(fileID);
+fprintf('Coefficient info saved to %s\n', outputFilename);
 % predict on the dev set
 yPred = predict(model, Xdev);
 
