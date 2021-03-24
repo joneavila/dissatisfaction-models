@@ -41,6 +41,13 @@ kNNframeLevel
 Reads labels from annotator `ja`. Output:
 
 ```MATLAB
+Coefficient info saved to coefficients.txt
+Mean Absolute Error = 0.452444
+```
+
+Preview of `coefficients.txt`,
+
+```MATLAB
 Sorted coefficients in descending order with format: coefficient, value, abbreviation
 17 | 1.031855 | se cr -1600 -800
 30 | 0.760532 | se cr  +800  +1600
@@ -53,10 +60,6 @@ Sorted coefficients in descending order with format: coefficient, value, abbrevi
 31 | -0.499117 | se tl -1600 -800
 45 | -0.504644 | se th -1600 -800
 58 | -0.955588 | se th  +800  +1600
-```
-
-```MATLAB
-Mean Absolute Error = 0.45244
 ```
 
 To run from MATLAB,
