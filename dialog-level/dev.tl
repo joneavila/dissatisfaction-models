@@ -1,4 +1,4 @@
-./calls/calls-transformed/
+./calls/
 
 # for list of train, dev, and test sets see python-scripts/sets.txt
 
