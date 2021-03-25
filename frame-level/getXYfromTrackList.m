@@ -1,4 +1,6 @@
-function [setX, setY] = getXYfromTrackList(trackList, directory, featureSpec)
+function [setX, setY] = getXYfromTrackList(trackList, featureSpec)
+
+    dirWorking = pwd;
 
     % Appending is expensive but pre-allocating space, at least for this
     % few data is not worth it
@@ -9,7 +11,7 @@ function [setX, setY] = getXYfromTrackList(trackList, directory, featureSpec)
     % for each in the train set
     for trackNum = 1:length(trackList)
         track = trackList{trackNum};
-        [dialogX, dialogY] = getXYforTrack(track.filename, directory, featureSpec); % TODO rename function
+        [dialogX, dialogY] = getXYfromFilename(track.filename, featureSpec);
         
         setX = [setX; dialogX];
         setY = [setY; dialogY];

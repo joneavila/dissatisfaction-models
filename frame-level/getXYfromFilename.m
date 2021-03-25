@@ -1,4 +1,6 @@
-function [X, y] = getXYforTrack(dialogFilename, directory, featureSpec)
+function [X, y] = getXYforTrack(dialogFilename, featureSpec)
+
+    dirWorking = pwd;
 
     % get the annotation filename from the dialog filename, assuming
     % they have the same name
@@ -7,7 +9,7 @@ function [X, y] = getXYforTrack(dialogFilename, directory, featureSpec)
 
     % get the monster
     customerSide = 'l';
-    dialogDirectory = append(directory, "\calls\");
+    dialogDirectory = append(dirWorking, "\calls\");
     dialogDirectory = convertStringsToChars(dialogDirectory);
     trackSpec = makeTrackspec(customerSide, dialogFilename, dialogDirectory);
     [~, monster] = makeTrackMonster(trackSpec, featureSpec);
@@ -15,19 +17,14 @@ function [X, y] = getXYforTrack(dialogFilename, directory, featureSpec)
     nFeatures = size(monster, 2);
     
     % get the annotation table set up (just using one annotator here)
-    annotationPath = append(directory, 'ja-annotations\', annotationFilename);
-    annotationTable = readElanAnnotation(annotationPath);
+    annotationPath = append(dirWorking, '\ja-annotations\', annotationFilename);
+    annotationTable = readElanAnnotation(annotationPath, true);
     
     % iterate the table to pre-allocate size of X and y
     totalFrames = 0;
     for annotationNum = 1:height(annotationTable)
         row = annotationTable(annotationNum, :);
-        % skip if the label is not "n", "nn", "d", or "dd"
-        % TODO check for bad labels
-        if ~strcmp(row.label, "n") && ~strcmp(row.label, "nn") && ...
-                ~strcmp(row.label, "d") && ~strcmp(row.label, "dd")
-            continue;
-        end
+        
         startFrameMonster = round(milliseconds(row.startTime) / 10);
         endFrameMonster = round(milliseconds(row.endTime) / 10);
         framesInRegion = endFrameMonster - startFrameMonster + 1;
