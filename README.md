@@ -50,6 +50,29 @@ Sorted coefficients in descending order with format: coefficient, value, abbrevi
 58 | -0.955588 | se th  +800  +1600
 ```
 
+The regressor is also used to predict on utterances using its frame-level predictions. The utterance MAE is 0.351. Output for each dialog,
+
+```NONE
+predicting on 20210115-aa-5f2fad64d1609e000b157ba5-magician-y-y.wav
+    utterancePred    utterancePredRound    utteranceActual
+    _____________    __________________    _______________
+
+        0.5466               1                    0       
+       0.28539               0                    0       
+        0.4921               0                    0       
+       0.19063               0                    0       
+       0.44349               0                    0       
+       0.66648               1                    1       
+       0.69928               1                    1       
+       0.78552               1                    1       
+       0.50941               1                    0       
+       0.58747               1                    1       
+       0.76767               1                    1       
+       0.65332               1                    1       
+       0.66585               1                    1       
+       0.36921               0                    0  
+```
+
 To run from MATLAB: `>>linearRegression`
 
 ## Dialog-level model (k-NN model)
