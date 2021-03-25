@@ -16,32 +16,21 @@
 
 ## Frame-level models
 
-Utterances are labeled as `d`, `dd`, `n`, `nn`, `o`, and `?` (see annotation
-guidelines). To predict dissatisfaction on a scale from 0 to 1 where 0 is
+The frame-level models share a train, dev, and test set
+(`frame-level/train.tl`, `frame-level/dev.tl`, and `frame-level/train.tl`,
+respectively).
+Customer utterances were labeled as `d`, `dd`, `n`, `nn`, `o`, and `?` by three
+annotators following guidelines [here]. To predict dissatisfaction on a scale from 0 to 1 where 0 is
 neutral and 1 is dissatisfied, `n` and `nn` are read as 0, `d` and `dd` are read
-as 1, and all others are ignored. Predictions are on single frames (10ms).
-
-The frame-level models share the same train, dev, and test sets:
-`frame-level/train.tl`, `frame-level/dev.tl`, and `frame-level/train.tl`.
+as 1, and all other labels are ignored. Predictions are on single frames of 10ms.
 
 ### Frame-level k-NN model
 
-Reads labels from annotator `ja`. Output:
-
-```MATLAB
-F-score = 0.32767
-Mean Absolute Error = 0.5226
-```
-
-To run from MATLAB,
-
-```MATLAB
-kNNframeLevel
-```
+A k-nearest neighbor classifier using MATLAB's `fitcknn` function. Reads labels from annotator `ja`. Trains with train set and predicts on dev set. The F-score is 0.328 and mean absolute error is 0.523. To run from MATLAB: `>>kNNframeLevel`
 
 ### Frame-level linear regression model
 
-Reads labels from annotator `ja`. The mean absolute error is
+A linear regressor using MATLAB's `fitlm` function. Reads labels from annotator `ja`. Trains with train set and predicts on dev set. The mean absolute error is
 0.452. The learned coefficients are saved to `coefficients.txt`, 
 
 ```MATLAB
@@ -59,19 +48,12 @@ Sorted coefficients in descending order with format: coefficient, value, abbrevi
 58 | -0.955588 | se th  +800  +1600
 ```
 
-To run from MATLAB,
-
-```MATLAB
-linearRegression
-```
+To run from MATLAB: `>>linearRegression`
 
 ## Dialog-level model (k-NN model)
 
-The mean absolute error is 0.0502. (The F-score is NaN due to a bug.) To run from MATLAB,
+[Description of model.] The mean absolute error is 0.0502. (The F-score is NaN due to a bug.) To run from MATLAB: `>>kNNdialogLevel`
 
-```MATLAB
-kNNdialogLevel
-```
 
 ## Histograms
 
@@ -80,17 +62,11 @@ to `frame-level/images`. Here's an example,
 
 ![Histogram for Feature 15 "se vo +800 +1600" neutral train+dev, nBins=30](images/histogram.png)
 
-To run from MATLAB,
-
-```MATLAB
-visualize
-```
+To run from MATLAB: `>>histograms`
 
 ## T-test
 
-A two-sample t-test to test the hypothesis that data from neutral frames and
-data from dissatisfied frames come from populations with unequal means, i.e.
-test whether each feature is significantly different between neutral frames and
+Determine which features are significantly different between neutral frames and
 dissatisfied frames. Output,
 
 ```MATLAB
