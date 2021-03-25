@@ -22,7 +22,7 @@ respectively).
 Customer utterances were labeled as `d`, `dd`, `n`, `nn`, `o`, and `?` by three
 annotators following guidelines [here]. To predict dissatisfaction on a scale from 0 to 1 where 0 is
 neutral and 1 is dissatisfied, `n` and `nn` are read as 0, `d` and `dd` are read
-as 1, and all other labels are ignored. Predictions are on single frames of 10ms.
+as 1, and all other labels are ignored. Predictions are on single frames of 10ms. The data is not balanced; there are many more neutral labels than dissatisfied labels. [A statistic would be nice.]
 
 ### Frame-level k-NN model
 
@@ -32,8 +32,8 @@ To run from MATLAB: `>>kNNframeLevel`
 
 ### Frame-level linear regression model
 
-A linear regressor using MATLAB's `fitlm` function. Reads labels from annotator `ja`. Trains with train set and predicts on dev set. The mean absolute error is
-0.452. The learned coefficients are saved to `coefficients.txt`, 
+A linear regressor using MATLAB's `fitlm` function. Reads labels from annotator `ja`. Trains with train set and predicts on dev set. The baseline predicts the majority class (in this case 0 for neutral). The regressor's mean absolute error (MAE) is
+0.452. The baseline's MAE is 0.257. The learned coefficients are saved to `coefficients.txt`, 
 
 ```MATLAB
 Sorted coefficients in descending order with format: coefficient, value, abbreviation

@@ -36,9 +36,16 @@ for coeffNum = 1:length(coefficients)
 end
 fclose(fileID);
 fprintf('Coefficient info saved to %s\n', outputFilename);
-% predict on the dev set
-yPred = predict(model, Xdev);
 
-% calculate mean absolute error
-mae = mean(abs(yPred - yDev));
-disp(['Mean Absolute Error = ', num2str(mae)]);
+% function for mean absolute error
+mae = @(A, B) (mean(abs(A - B)));
+
+% let the regressor predict on the dev set
+yPred = predict(model, Xdev);
+regressorMae = mae(yDev, yPred);
+disp(['Regressor MAE = ', num2str(regressorMae)]);
+
+% the baseline predicts the majority class (the data is not balanced)
+yBaseline = ones([size(Xdev, 1), 1]) * mode(yTrain);
+baselineMae = mae(yDev, yBaseline);
+disp(['Baseline MAE = ', num2str(baselineMae)]);
