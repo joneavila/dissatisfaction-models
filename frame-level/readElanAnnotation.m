@@ -1,7 +1,7 @@
 % read frame-level annotations from default ELAN tab-delimited 
 % export to MATLAB table
 
-function annotationTable = readElanAnnotation(annotationFilepath)
+function annotationTable = readElanAnnotation(annotationFilepath, filter)
     importOptions = delimitedTextImportOptions( ...
         'Delimiter', {'\t'}, ...
         'VariableNames', {'tier', 'startTime', 'startTimeShort', 'endTime', 'endTimeShort', 'duration', 'durationShort', 'label'}, ...
@@ -10,5 +10,12 @@ function annotationTable = readElanAnnotation(annotationFilepath)
         'ConsecutiveDelimitersRule', 'join' ...
         );
     annotationTable = readtable(annotationFilepath, importOptions);
+    
+    % if filter argument was passed, delete rows with labels other than "n"
+    % "nn" "d" or "dd"
+    if filter
+        toDelete = ismember(annotationTable.label, ["n" "nn" "d" "dd"]);
+        annotationTable(~toDelete, :) = [];
+    end
 end
 
