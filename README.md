@@ -21,6 +21,9 @@ guidelines). To predict dissatisfaction on a scale from 0 to 1 where 0 is
 neutral and 1 is dissatisfied, `n` and `nn` are read as 0, `d` and `dd` are read
 as 1, and all others are ignored. Predictions are on single frames (10ms).
 
+The frame-level models share the same train, dev, and test sets:
+`frame-level/train.tl`, `frame-level/dev.tl`, and `frame-level/train.tl`.
+
 ### Frame-level k-NN model
 
 Reads labels from annotator `ja`. Output:
@@ -38,14 +41,8 @@ kNNframeLevel
 
 ### Frame-level linear regression model
 
-Reads labels from annotator `ja`. Output:
-
-```MATLAB
-Coefficient info saved to coefficients.txt
-Mean Absolute Error = 0.452444
-```
-
-Preview of `coefficients.txt`,
+Reads labels from annotator `ja`. The mean absolute error is
+0.452. The learned coefficients are saved to `coefficients.txt`, 
 
 ```MATLAB
 Sorted coefficients in descending order with format: coefficient, value, abbreviation
@@ -70,7 +67,7 @@ linearRegression
 
 ## Dialog-level model (k-NN model)
 
-(This code needs some tweaking after I moved some files around.) To run from MATLAB,
+The mean absolute error is 0.0502. (The F-score is NaN due to a bug.) To run from MATLAB,
 
 ```MATLAB
 kNNdialogLevel
