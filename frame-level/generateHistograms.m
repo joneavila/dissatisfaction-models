@@ -1,4 +1,4 @@
-% visualize.m - save a histogram of each feature, use the train and dev set
+% generateHistograms.m - save a histogram of each feature, use the train and dev set
 
 % add necessary files to path
 addpath(genpath('midlevel-master'));
@@ -33,8 +33,9 @@ D = [trainDissatisfied; devDissatisfied];
 % save a histogram for each feature
 
 % config
-nBins = 30;
-barColor = '#E1BEE7';
+nBins = 32;
+barColorN = '#2196F3';
+barColorD = '#FF9800';
 
 imageDir = append(pwd, "\frame-level\images\");
 status = mkdir(imageDir);
@@ -43,16 +44,33 @@ if ~status
 end
 
 for featureNum = 1:size(featureSpec, 2)
+    
     f = figure('Visible', 'off');
-    h = histogram(N(:, featureNum), nBins);
-    h.FaceColor = barColor;
+    
+    % histogram for neutral
+    hN = histogram(N(:, featureNum), nBins);
+    hN.FaceColor = barColorN;
+    
+    hold on
+   
+    % histogram for dissatisfied
+    hD = histogram(D(:, featureNum), nBins);
+    hD.FaceColor = barColorD;
+    
+    % add titles, axes labels, and legend
     feature = featureSpec(featureNum);
     titleText = sprintf('feat%02d %s', featureNum, feature.abbrev);
-    subtitleText = sprintf('neutral train+dev, nBins=%d', nBins);
+    subtitleText = sprintf('train+dev, nBins=%d', nBins);
     title(titleText, subtitleText);
     ylabel('Number in bin');
     xlabel('Bin');
-    saveas(f, append(imageDir, titleText, ".png"));
+    legend('neutral','dissatisfied')
+    
+    % save image
+    imageFilepath = append(imageDir, titleText, ".png");
+    saveas(f, imageFilepath);
+    fprintf('Saved image to %s\n', imageFilepath);
+    
     clf;
 end
 disp("done");
