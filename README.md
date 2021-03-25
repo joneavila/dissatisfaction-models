@@ -26,7 +26,9 @@ as 1, and all other labels are ignored. Predictions are on single frames of 10ms
 
 ### Frame-level k-NN model
 
-A k-nearest neighbor classifier using MATLAB's `fitcknn` function. Reads labels from annotator `ja`. Trains with train set and predicts on dev set. The F-score is 0.328 and mean absolute error is 0.523. To run from MATLAB: `>>kNNframeLevel`
+A k-nearest neighbor classifier using MATLAB's `fitcknn` function. Reads labels from annotator `ja`. Trains with train set and predicts on dev set. The F-score is 0.328 and mean absolute error is 0.523.
+
+To run from MATLAB: `>>kNNframeLevel`
 
 ### Frame-level linear regression model
 
@@ -52,21 +54,24 @@ To run from MATLAB: `>>linearRegression`
 
 ## Dialog-level model (k-NN model)
 
-[Description of model.] The mean absolute error is 0.0502. (The F-score is NaN due to a bug.) To run from MATLAB: `>>kNNdialogLevel`
+[Description of model.] The mean absolute error is 0.0502. (The F-score is NaN due to a bug.)
 
+To run from MATLAB: `>>kNNdialogLevel`
 
-## Histograms
+## Feature histograms
 
 Save a histogram for each feature used in the train and dev set. Save histograms
 to `frame-level/images`. Here's an example,
 
 ![Histogram for Feature 15 "se vo +800 +1600" neutral train+dev, nBins=30](images/histogram.png)
 
-To run from MATLAB: `>>histograms`
+The feature specification file lays out what features and what windows to use. [An example.] For `mono.fss` in particular, window sizes become larger the further away they are from t=0. Features of the same feature but different window have similar distributions. For example, feat01 through feat16 (volume) have bimodal distributions likely because quiet frames at the start and end of utterances make up the first mode and the average volume makes up the second mode. As another example, feat17 through feat30 (creakiness) have skewed distributions likely because there is little evidence for creakiness and so the distribution skews right. The distributions for the remaining features follow our expectations. [Do they show that neutral and dissatisfied are significantly different?]
 
-## T-test
+To run from MATLAB: `>>generateHistograms`
 
-Determine which features are significantly different between neutral frames and
+## t-tests
+
+Displays which features are significantly different between neutral frames and
 dissatisfied frames. Output,
 
 ```MATLAB
@@ -162,8 +167,4 @@ The following features do not reject the null hypothesis:
 #58 se th  +800  +1600
 ```
 
-To run from MATLAB,
-
-```MATLAB
-tTest
-```
+To run from MATLAB: `>> tTest`
