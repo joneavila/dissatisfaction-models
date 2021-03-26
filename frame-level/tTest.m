@@ -1,45 +1,34 @@
 % tTest.m
 
-% add necessary files to path
-addpath(genpath('midlevel-master'));
-addpath(genpath('calls'));
-
-dirWorking = append(pwd, "\");
-
-% get feature spec (mono.fss)
 featureSpec = getfeaturespec('mono.fss');
 
-% get the track lists
-trackListTrain = gettracklist("train.tl");
-trackListDev = gettracklist("dev.tl");
-% trackListTest = gettracklist("test.tl");
+trackListTrain = gettracklist(".\frame-level\train.tl");
+trackListDev = gettracklist(".\frame-level\dev.tl");
 
-% get X (monster regions) and Y (labels)
-[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, dirWorking, featureSpec);
-[Xdev, yDev] = getXYfromTrackList(trackListDev, dirWorking, featureSpec);
+[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec);
+[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec);
 
-%%
 % 'n' and 'nn' are the negative class (0), 'd' and 'dd' are the positive
 % class (1)
 trainNeutral = Xtrain(yTrain==0, :);
 trainDissatisfied = Xtrain(yTrain==1, :);
-
 devNeutral = Xdev(yDev==0, :);
 devDissatisfied = Xdev(yDev==1, :);
 
-% t-test will compare neutral and dissatisfied
+% test will compare neutral frames to dissatisfied frames
 N = [trainNeutral; devNeutral];
 D = [trainDissatisfied; devDissatisfied];
 
-% resize 'neutral' or 'dissatisfied' so they match in size
-% note: this means X and Y might have a different number of speakers
+% resize either matrix so they match in size
+% note: this means X and Y may have a different number of speakers
 if size(N, 1) > size(D, 1)
     N = N(1:size(D, 1), :);
 elseif size(D, 1) > size(N, 1)
     D = D(1:size(N, 1), :);
 end
-%%
+
 % ttest2 documentation: https://www.mathworks.com/help/stats/ttest2.html
+
 % "h = ttest2(x,y) returns a test decision for the null hypothesis that 
 % the data in vectors x and y comes from independent random samples from 
 % normal distributions with equal means and equal but unknown variances, 
@@ -50,21 +39,16 @@ end
 
 % "Conduct test using the assumption that x and y are from normal 
 % distributions with unknown and unequal variances."
-hypothesesTestResults = ttest2(N, D, 'Vartype', 'unequal');
+[hypothesesTestResults, pValue, confidenceInterval, stats] = ...
+    ttest2(N, D, 'Vartype', 'unequal');
 rejectsNull = hypothesesTestResults == 1;
+featureAbbrev = {featureSpec.abbrev};
 
-disp('The following features reject the null hypothesis:');
-for i = 1:length(rejectsNull)
-    if rejectsNull(i)
-        feature = featureSpec(i);
-        fprintf('#%d %s\n', i, feature.abbrev);
-    end
-end
+% "p is the probability of observing a test statistic as extreme as, or 
+% more extreme than, the observed value under the null hypothesis. Small 
+% values of p cast doubt on the validity of the null hypothesis."
 
-disp('The following features do not reject the null hypothesis:');
-for i = 1:length(rejectsNull)
-    if ~rejectsNull(i)
-        feature = featureSpec(i);
-        fprintf('#%d %s\n', i, feature.abbrev);
-    end
-end
+resultsTable = table(featureAbbrev', rejectsNull', pValue');
+resultsTable.Properties.VariableNames = ...
+    ["feature abbreviation", "rejects null?", "p-value"];
+display(resultsTable);

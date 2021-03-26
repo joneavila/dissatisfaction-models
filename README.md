@@ -98,96 +98,97 @@ Displays which features are significantly different between neutral frames and
 dissatisfied frames. Output,
 
 ```MATLAB
-The following features reject the null hypothesis:
-#1 se vo -3200 -1600
-#2 se vo -1600 -800
-#3 se vo -800 -400
-#4 se vo -400 -300
-#5 se vo -300 -200
-#6 se vo -200 -100
-#7 se vo -100 -50
-#8 se vo -50  +0
-#9 se vo  +0  +50
-#10 se vo  +50  +100
-#11 se vo  +100  +200
-#12 se vo  +200  +300
-#13 se vo  +300  +400
-#15 se vo  +800  +1600
-#16 se vo  +1600  +3200
-#17 se cr -1600 -800
-#18 se cr -800 -400
-#19 se cr -400 -300
-#20 se cr -300 -200
-#21 se cr -200 -100
-#22 se cr -100 -50
-#23 se cr -50  +0
-#24 se cr  +0  +50
-#25 se cr  +50  +100
-#26 se cr  +100  +200
-#27 se cr  +200  +300
-#28 se cr  +300  +400
-#29 se cr  +400  +800
-#30 se cr  +800  +1600
-#31 se tl -1600 -800
-#32 se tl -800 -400
-#33 se tl -400 -300
-#34 se tl -300 -200
-#35 se tl -200 -100
-#36 se tl -100 -50
-#37 se tl -50  +0
-#38 se tl  +0  +50
-#39 se tl  +50  +100
-#40 se tl  +100  +200
-#41 se tl  +200  +300
-#42 se tl  +300  +400
-#43 se tl  +400  +800
-#44 se tl  +800  +1600
-#45 se th -1600 -800
-#47 se th -400 -300
-#48 se th -300 -200
-#49 se th -200 -100
-#50 se th -100 -50
-#51 se th -50  +0
-#52 se th  +0  +50
-#53 se th  +50  +100
-#54 se th  +100  +200
-#55 se th  +200  +300
-#56 se th  +300  +400
-#57 se th  +400  +800
-#59 se np -1600 -800
-#60 se np -800 -400
-#61 se np -400 -300
-#62 se np -300 -200
-#63 se np -200  +0
-#64 se np  +0  +200
-#65 se np  +200  +300
-#66 se np  +300  +400
-#67 se np  +400  +800
-#68 se np  +800  +1600
-#69 se wp -1600 -800
-#70 se wp -800 -400
-#71 se wp -400 -300
-#72 se wp -300 -200
-#73 se wp -200  +0
-#74 se wp  +0  +200
-#75 se wp  +200  +300
-#76 se wp  +300  +400
-#77 se wp  +400  +800
-#78 se wp  +800  +1600
-#79 se sr -1600 -800
-#80 se sr -800 -400
-#81 se sr -400 -200
-#82 se sr -200 -100
-#83 se sr -100  +0
-#84 se sr  +0  +100
-#85 se sr  +100  +200
-#86 se sr  +200  +400
-#87 se sr  +400  +800
-#88 se sr  +800  +1600
-The following features do not reject the null hypothesis:
-#14 se vo  +400  +800
-#46 se th -800 -400
-#58 se th  +800  +1600
+     feature abbreviation      rejects null?      p-value  
+    _______________________    _____________    ___________
+
+    {'se vo -3200 -1600'  }        true          5.5622e-73
+    {'se vo -1600 -800'   }        true          5.4532e-13
+    {'se vo -800 -400'    }        true            0.030496
+    {'se vo -400 -300'    }        true          2.1228e-09
+    {'se vo -300 -200'    }        true          3.1676e-14
+    {'se vo -200 -100'    }        true          5.4054e-19
+    {'se vo -100 -50'     }        true          1.7655e-26
+    {'se vo -50  +0'      }        true          8.5117e-29
+    {'se vo  +0  +50'     }        true          8.0859e-31
+    {'se vo  +50  +100'   }        true          1.1324e-30
+    {'se vo  +100  +200'  }        true          8.2284e-23
+    {'se vo  +200  +300'  }        true          6.3098e-15
+    {'se vo  +300  +400'  }        true          3.5569e-09
+    {'se vo  +400  +800'  }        false            0.10561
+    {'se vo  +800  +1600' }        true          6.8368e-15
+    {'se vo  +1600  +3200'}        true          1.4088e-54
+    {'se cr -1600 -800'   }        true                   0
+    {'se cr -800 -400'    }        true         8.1608e-234
+    {'se cr -400 -300'    }        true          6.7051e-68
+    {'se cr -300 -200'    }        true          3.6657e-67
+    {'se cr -200 -100'    }        true          4.3382e-65
+    {'se cr -100 -50'     }        true          2.2744e-40
+    {'se cr -50  +0'      }        true          1.4552e-39
+    {'se cr  +0  +50'     }        true          4.2149e-39
+    {'se cr  +50  +100'   }        true          5.7944e-39
+    {'se cr  +100  +200'  }        true          2.5197e-62
+    {'se cr  +200  +300'  }        true          9.7084e-69
+    {'se cr  +300  +400'  }        true          3.4148e-78
+    {'se cr  +400  +800'  }        true         9.4629e-219
+    {'se cr  +800  +1600' }        true                   0
+    {'se tl -1600 -800'   }        true         3.9895e-185
+    {'se tl -800 -400'    }        true          3.0009e-86
+    {'se tl -400 -300'    }        true          8.9309e-38
+    {'se tl -300 -200'    }        true          2.8801e-30
+    {'se tl -200 -100'    }        true          1.3516e-23
+    {'se tl -100 -50'     }        true          4.9229e-17
+    {'se tl -50  +0'      }        true          2.0642e-15
+    {'se tl  +0  +50'     }        true          1.3243e-14
+    {'se tl  +50  +100'   }        true           1.304e-14
+    {'se tl  +100  +200'  }        true          4.4012e-18
+    {'se tl  +200  +300'  }        true          2.5697e-19
+    {'se tl  +300  +400'  }        true          3.9487e-22
+    {'se tl  +400  +800'  }        true          1.3545e-56
+    {'se tl  +800  +1600' }        true         2.8582e-144
+    {'se th -1600 -800'   }        true          7.5565e-10
+    {'se th -800 -400'    }        false            0.56837
+    {'se th -400 -300'    }        true          1.4626e-05
+    {'se th -300 -200'    }        true          1.2966e-06
+    {'se th -200 -100'    }        true          4.0619e-07
+    {'se th -100 -50'     }        true          3.5999e-07
+    {'se th -50  +0'      }        true           9.428e-08
+    {'se th  +0  +50'     }        true          2.7614e-08
+    {'se th  +50  +100'   }        true          1.7925e-08
+    {'se th  +100  +200'  }        true          3.9816e-09
+    {'se th  +200  +300'  }        true          1.2863e-06
+    {'se th  +300  +400'  }        true          0.00021014
+    {'se th  +400  +800'  }        true          0.00051015
+    {'se th  +800  +1600' }        false            0.95353
+    {'se np -1600 -800'   }        true          1.1142e-28
+    {'se np -800 -400'    }        true           1.448e-57
+    {'se np -400 -300'    }        true          1.0685e-26
+    {'se np -300 -200'    }        true          5.8502e-29
+    {'se np -200  +0'     }        true          8.9558e-62
+    {'se np  +0  +200'    }        true          7.4006e-66
+    {'se np  +200  +300'  }        true          3.8425e-32
+    {'se np  +300  +400'  }        true          2.1939e-27
+    {'se np  +400  +800'  }        true          7.6168e-47
+    {'se np  +800  +1600' }        true          3.3942e-17
+    {'se wp -1600 -800'   }        true                   0
+    {'se wp -800 -400'    }        true         6.3689e-197
+    {'se wp -400 -300'    }        true          1.7196e-39
+    {'se wp -300 -200'    }        true          3.2623e-35
+    {'se wp -200  +0'     }        true          1.2199e-45
+    {'se wp  +0  +200'    }        true          1.5947e-40
+    {'se wp  +200  +300'  }        true          7.8107e-29
+    {'se wp  +300  +400'  }        true          1.0979e-32
+    {'se wp  +400  +800'  }        true         2.1769e-152
+    {'se wp  +800  +1600' }        true                   0
+    {'se sr -1600 -800'   }        true         1.5646e-302
+    {'se sr -800 -400'    }        true         2.2131e-181
+    {'se sr -400 -200'    }        true         6.9178e-140
+    {'se sr -200 -100'    }        true         1.7948e-161
+    {'se sr -100  +0'     }        true         2.4495e-160
+    {'se sr  +0  +100'    }        true         1.2612e-166
+    {'se sr  +100  +200'  }        true         1.7564e-186
+    {'se sr  +200  +400'  }        true         1.0144e-166
+    {'se sr  +400  +800'  }        true         4.3446e-176
+    {'se sr  +800  +1600' }        true         7.0244e-240
 ```
 
 To run from MATLAB: `>> tTest`
