@@ -1,24 +1,22 @@
-function [X, y] = getXYforTrack(dialogFilename, featureSpec)
-
-    dirWorking = pwd;
+function [X, y] = getXYfromFile(filename, featureSpec)
+% GETXYFROMFILE Features are stored in X, labels are stored in y. Only
+% neutral and disappointed labels are used ("n", "nn", "d", "dd").
 
     % get the annotation filename from the dialog filename, assuming
     % they have the same name
-    [~, name, ~] = fileparts(dialogFilename);
+    [~, name, ~] = fileparts(filename);
     annotationFilename = append(name, ".txt");
 
     % get the monster
     customerSide = 'l';
-    dialogDirectory = append(dirWorking, "\calls\");
-    dialogDirectory = convertStringsToChars(dialogDirectory);
-    trackSpec = makeTrackspec(customerSide, dialogFilename, dialogDirectory);
+    trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
     [~, monster] = makeTrackMonster(trackSpec, featureSpec);
     
     nFeatures = size(monster, 2);
     
     % get the annotation table set up (just using one annotator here)
-    annotationPath = append(dirWorking, '\ja-annotations\', annotationFilename);
-    annotationTable = readElanAnnotation(annotationPath, true);
+    annotationPathRelative = append('ja-annotations\', annotationFilename);
+    annotationTable = readElanAnnotation(annotationPathRelative, true);
     
     % iterate the table to pre-allocate size of X and y
     totalFrames = 0;

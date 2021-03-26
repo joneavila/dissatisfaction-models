@@ -1,20 +1,15 @@
-function [setX, setY] = getXYfromTrackList(trackList, featureSpec)
+function [X, y] = getXYfromTrackList(trackList, featureSpec)
+% GETXYFROMTRACKLIST Features are stored in X, labels are stored in y. See
+% GETXYFROMFILE.
 
-    dirWorking = pwd;
-
-    % Appending is expensive but pre-allocating space, at least for this
-    % few data is not worth it
-    nFeatures = size(featureSpec, 2);
-    setX = zeros([1 nFeatures]);
-    setY = zeros([1 0]);
-    
-    % for each in the train set
+    X = [];
+    y = [];
     for trackNum = 1:length(trackList)
         track = trackList{trackNum};
-        [dialogX, dialogY] = getXYfromFilename(track.filename, featureSpec);
+        [dialogX, dialogY] = getXYfromFile(track.filename, featureSpec);
         
-        setX = [setX; dialogX];
-        setY = [setY; dialogY];
+        % appending is ugly but isn't too slow here
+        X = [X; dialogX];
+        y = [y; dialogY];
     end
-    setX(1,:) = [];
 end
