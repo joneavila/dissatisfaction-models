@@ -1,4 +1,4 @@
-% tTest.m
+% tTests.m
 
 featureSpec = getfeaturespec('mono.fss');
 
@@ -14,18 +14,10 @@ trainNeutral = Xtrain(yTrain==0, :);
 trainDissatisfied = Xtrain(yTrain==1, :);
 devNeutral = Xdev(yDev==0, :);
 devDissatisfied = Xdev(yDev==1, :);
-
+%%
 % test will compare neutral frames to dissatisfied frames
 N = [trainNeutral; devNeutral];
 D = [trainDissatisfied; devDissatisfied];
-
-% resize either matrix so they match in size
-% note: this means X and Y may have a different number of speakers
-if size(N, 1) > size(D, 1)
-    N = N(1:size(D, 1), :);
-elseif size(D, 1) > size(N, 1)
-    D = D(1:size(N, 1), :);
-end
 
 % ttest2 documentation: https://www.mathworks.com/help/stats/ttest2.html
 
@@ -39,9 +31,9 @@ end
 
 % "Conduct test using the assumption that x and y are from normal 
 % distributions with unknown and unequal variances."
-[hypothesesTestResults, pValue, confidenceInterval, stats] = ...
-    ttest2(N, D, 'Vartype', 'unequal');
-rejectsNull = hypothesesTestResults == 1;
+[testResults, pValue, ~, ~] = ttest2(N, D, 'Vartype', 'unequal');
+
+rejectsNull = testResults == 1;
 featureAbbrev = {featureSpec.abbrev};
 
 % "p is the probability of observing a test statistic as extreme as, or 
@@ -52,3 +44,10 @@ resultsTable = table(featureAbbrev', rejectsNull', pValue');
 resultsTable.Properties.VariableNames = ...
     ["feature abbreviation", "rejects null?", "p-value"];
 display(resultsTable);
+
+%% t-test on regressor output
+regressor = fitlm(Xtrain, yTrain);
+predN = predict(regressor, N);
+predD = predict(regressor, D);
+[testResult, pValue, ~, ~] = ttest2(predN, predD, 'Vartype', 'unequal');
+fprintf('Regressor output t-test result = %d\n', testResult);

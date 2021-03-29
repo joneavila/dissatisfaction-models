@@ -121,8 +121,9 @@ To run from MATLAB: `>> generateHistograms`
 
 ## t-tests
 
-Displays which features are significantly different between neutral frames and
-dissatisfied frames. Output,
+The first t-test is for features between neutral frames (N) and dissatisfied
+frames (D) from the
+train and dev set. Output,
 
 ```NONE
      feature abbreviation      rejects null?      p-value  
@@ -218,4 +219,7 @@ dissatisfied frames. Output,
     {'se sr  +800  +1600' }        true         7.0244e-240
 ```
 
-To run from MATLAB: `>> tTest`
+The second t-test is between the linear regressor's predictions for N and
+predictions D. The test result is **1** (rejects null hypothesis).
+
+To run from MATLAB: `>> tTests`
