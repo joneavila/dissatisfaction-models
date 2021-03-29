@@ -14,15 +14,22 @@
    `dissatisfaction-models` in MATLAB and add the folder and its subfolders to
    Path.
 
+## Feature specification file
+
+[It is mono.fss with added 'cp' feature.]
+
 ## Frame-level models
 
 The frame-level models share a train, dev, and test set
 (`frame-level/train.tl`, `frame-level/dev.tl`, and `frame-level/train.tl`,
 respectively).
+
 Customer utterances were labeled as `d`, `dd`, `n`, `nn`, `o`, and `?` by three
-annotators following guidelines [here]. To predict dissatisfaction on a scale from 0 to 1 where 0 is
-neutral and 1 is dissatisfied, `n` and `nn` are read as 0, `d` and `dd` are read
-as 1, and all other labels are ignored. Predictions are on single frames of 10ms. The data is not balanced; there are many more neutral labels than dissatisfied labels. [A statistic would be nice.]
+annotators following guidelines [here]. To predict dissatisfaction on a scale
+from 0 to 1 where 0 is neutral and 1 is dissatisfied, `n` and `nn` are read as
+0, `d` and `dd` are read as 1, and all other labels are ignored. Predictions
+are on single frames of 10ms. The data is not balanced; there are many more
+neutral labels than dissatisfied labels. [A statistic would be nice.]
 
 ### Frame-level k-NN model
 
@@ -30,12 +37,15 @@ A k-nearest neighbor classifier using MATLAB's `fitcknn` function. Reads labels 
 
 To run from MATLAB: `>>kNNframeLevel`
 
-### Frame-level linear regression model
+### Frame-level linear regression model and utterance-level model
 
-A linear regressor using MATLAB's `fitlm` function. Reads labels from annotator `ja`. Trains with train set and predicts on dev set. The baseline predicts the majority class (in this case 0 for neutral). The regressor's mean absolute error (MAE) is
-0.452. The baseline's MAE is 0.257. The learned coefficients are saved to `coefficients.txt`, 
+A linear regressor using MATLAB's `fitlm` function. Reads labels from annotator
+`ja`. Trains with train set and predicts on dev set. The baseline predicts the
+majority class (in this case 0 for neutral). The regressor's mean absolute error
+(MAE) is 0.452. The baseline's MAE is 0.257. The learned coefficients are saved
+to `coefficients.txt`. Here is a preview of the file,
 
-```MATLAB
+```NONE
 Sorted coefficients in descending order with format: coefficient, value, abbreviation
 17 | 1.031855 | se cr -1600 -800
 30 | 0.760532 | se cr  +800  +1600
@@ -50,7 +60,7 @@ Sorted coefficients in descending order with format: coefficient, value, abbrevi
 58 | -0.955588 | se th  +800  +1600
 ```
 
-The regressor is also used to predict on utterances using its frame-level predictions. The utterance MAE is 0.351. Output for each dialog,
+The frame-level linear regression model is also used to predict on utterances using its frame-level predictions. The utterance MAE is 0.351. Output for each dialog,
 
 ```NONE
 predicting on 20210115-aa-5f2fad64d1609e000b157ba5-magician-y-y.wav
@@ -75,29 +85,40 @@ predicting on 20210115-aa-5f2fad64d1609e000b157ba5-magician-y-y.wav
 
 To run from MATLAB: `>>linearRegression`
 
-## Dialog-level model (k-NN model)
+## Dialog-level k-NN model
 
-[Description of model.] The mean absolute error is 0.0502. (The F-score is NaN due to a bug.)
+A k-nearest neighbor classifier using MATLAB's `fitcknn` function. The MAE is
+0.0502. The F1 score is 0. [The baseline has not been written yet.]
 
 To run from MATLAB: `>>kNNdialogLevel`
 
 ## Feature histograms
 
-Save a histogram for each feature used in the train and dev set. Save histograms
+Save a histogram for each feature in the train and dev set. Save histograms
 to `frame-level/images`. Here's an example,
 
 ![Histogram for Feature 15 "se vo +800 +1600" neutral train+dev, nBins=30](images/histogram.png)
 
-The feature specification file lays out what features and what windows to use. [An example.] For `mono.fss` in particular, window sizes become larger the further away they are from t=0. Features of the same feature but different window have similar distributions. For example, feat01 through feat16 (volume) have bimodal distributions likely because quiet frames at the start and end of utterances make up the first mode and the average volume makes up the second mode. As another example, feat17 through feat30 (creakiness) have skewed distributions likely because there is little evidence for creakiness and so the distribution skews right. The distributions for the remaining features follow our expectations. [Do they show that neutral and dissatisfied are significantly different?]
+The feature specification file lays out what features and what windows to use.
+[An example.] For `mono.fss` in particular, window sizes become larger the
+further away they are from t=0. The distributions follow
+our expectations. The histograms are normalized so that bar heights add to 1.
+For example, feat01 through feat16 (volume)
+have bimodal distributions likely because quiet frames at the start and end of
+utterances make up the first mode and the average volume makes up the second
+mode. As another example, feat17 through feat30 (creakiness) have skewed
+distributions likely because there is little evidence for creakiness and so the
+distribution skews right. [Do they show that neutral and dissatisfied are significantly
+different?]
 
-To run from MATLAB: `>>generateHistograms`
+To run from MATLAB: `>> generateHistograms`
 
 ## t-tests
 
 Displays which features are significantly different between neutral frames and
 dissatisfied frames. Output,
 
-```MATLAB
+```NONE
      feature abbreviation      rejects null?      p-value  
     _______________________    _____________    ___________
 
