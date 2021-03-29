@@ -1,4 +1,4 @@
-# From http://www.cs.utep.edu/nigel/stance/mono.fss
+# Modified from http://www.cs.utep.edu/nigel/stance/mono.fss
 
 ### Self Features
 ## volume 
@@ -109,3 +109,7 @@ sr   100 to   200 self
 sr   200 to   400 self
 sr   400 to   800 self
 sr   800 to  1600 self
+
+## smoothed cepstral peak prominence
+cp  -100 to    -0 self
+cp     0 to   100 self
