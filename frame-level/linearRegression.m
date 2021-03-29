@@ -30,13 +30,15 @@ mae = @(A, B) (mean(abs(A - B)));
 
 % let the regressor predict on the dev set
 yPred = predict(model, Xdev);
-fprintf('Regressor MAE = %f\n', mae(yDev, yPred));
 
 % the baseline predicts the majority class (the data is not balanced)
 yBaseline = ones([size(Xdev, 1), 1]) * mode(yTrain);
+
+disp('Frame-level:');
+fprintf('Regressor MAE = %f\n', mae(yDev, yPred));
 fprintf('Baseline MAE = %f\n', mae(yDev, yBaseline));
 
-% predict on each utterance using frame-level predictions
+%% predict on each utterance using frame-level predictions
 % the baseline looks at the frames in an utterance and predicts the
 % majority class
 yUtterancePred = [];
@@ -89,5 +91,6 @@ for trackNum = 1:size(trackListTrain, 2)
     
 end
 
+disp('Utterance-level:');
 fprintf('Utterance MAE = %f\n', mae(yUtteranceActual, yUtterancePred));
 fprintf('Baseline MAE = %f\n', mae(yUtteranceActual, yUtteranceBaseline));
