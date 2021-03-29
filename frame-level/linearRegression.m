@@ -37,8 +37,11 @@ yBaseline = ones([size(Xdev, 1), 1]) * mode(yTrain);
 fprintf('Baseline MAE = %f\n', mae(yDev, yBaseline));
 
 % predict on each utterance using frame-level predictions
+% the baseline looks at the frames in an utterance and predicts the
+% majority class
 yUtterancePred = [];
 yUtteranceActual = [];
+yUtteranceBaseline = [];
 
 for trackNum = 1:size(trackListTrain, 2)
     
@@ -69,11 +72,13 @@ for trackNum = 1:size(trackListTrain, 2)
         frameStart = round(milliseconds(row.startTime) / 10);
         frameEnd = round(milliseconds(row.endTime) / 10);
         utterance = monster(frameStart:frameEnd, :);
-        utterancePred(rowNum) = mean(predict(model, utterance));
+        utterancePredictions = predict(model, utterance);
+        utterancePred(rowNum) = mean(utterancePredictions);
+        yUtteranceBaseline = mode(utterancePredictions);
     end
     
     utterancePredRound = round(utterancePred); % threshold is 0.5
-    utteranceActual = arrayfun(@(x) labelToFloat(x), annotationTable.label);
+    utteranceActual = arrayfun(@labelToFloat, annotationTable.label);
     
     % display utterance info in a table
     disp(table(utterancePred, utterancePredRound, utteranceActual));
@@ -83,4 +88,6 @@ for trackNum = 1:size(trackListTrain, 2)
     yUtteranceActual = [yUtteranceActual; utteranceActual];
     
 end
+
 fprintf('Utterance MAE = %f\n', mae(yUtteranceActual, yUtterancePred));
+fprintf('Baseline MAE = %f\n', mae(yUtteranceActual, yUtteranceBaseline));
