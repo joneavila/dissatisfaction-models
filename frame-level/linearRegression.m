@@ -5,10 +5,11 @@ featureSpec = getfeaturespec('.\mono.fss');
 trackListTrain = gettracklist(".\frame-level\train.tl");
 trackListDev = gettracklist(".\frame-level\dev.tl");
 
-[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec);
-[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec);
+useAllAnnotators = false;
+[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec, useAllAnnotators);
+[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
 
-% train regressor
+%% train regressor
 model = fitlm(Xtrain, yTrain);
 
 % save coefficient info to a text file
@@ -38,59 +39,3 @@ disp('Frame-level:');
 fprintf('Regressor MAE = %f\n', mae(yDev, yPred));
 fprintf('Baseline MAE = %f\n', mae(yDev, yBaseline));
 
-%% predict on each utterance using frame-level predictions
-% the baseline looks at the frames in an utterance and predicts the
-% majority class
-yUtterancePred = [];
-yUtteranceActual = [];
-yUtteranceBaseline = [];
-
-for trackNum = 1:size(trackListTrain, 2)
-    
-    track = trackListTrain{trackNum};
-    fprintf("predicting on %s\n", track.filename)
-    
-    % get the annotation filename from the dialog filename, assuming
-    % they have the same name
-    [~, name, ~] = fileparts(track.filename);
-    annotationFilename = append(name, ".txt");
-    
-    % get the annotation table set up (just using one annotator here)
-    annotationPathRelative = append('ja-annotations\', annotationFilename);
-    annotationTable = readElanAnnotation(annotationPathRelative, true);
-    
-    % get the monster
-    customerSide = 'l';
-    trackSpec = makeTrackspec(customerSide, track.filename, track.directory);
-    [~, monster] = makeTrackMonster(trackSpec, featureSpec);
-    
-    % for each utterance (row in annotation table) let the regressor 
-    % predict on each frame of the utterance then make the average of 
-    % those predictions the final prediction
-    nUtterances = size(annotationTable, 1);
-    utterancePred = zeros([nUtterances 1]);
-    for rowNum = 1:nUtterances
-        row = annotationTable(rowNum, :);
-        frameStart = round(milliseconds(row.startTime) / 10);
-        frameEnd = round(milliseconds(row.endTime) / 10);
-        utterance = monster(frameStart:frameEnd, :);
-        utterancePredictions = predict(model, utterance);
-        utterancePred(rowNum) = mean(utterancePredictions);
-        yUtteranceBaseline = mode(utterancePredictions);
-    end
-    
-    utterancePredRound = round(utterancePred); % threshold is 0.5
-    utteranceActual = arrayfun(@labelToFloat, annotationTable.label);
-    
-    % display utterance info in a table
-    disp(table(utterancePred, utterancePredRound, utteranceActual));
-
-    % appending is ugly but isn't too slow here
-    yUtterancePred = [yUtterancePred; utterancePred];
-    yUtteranceActual = [yUtteranceActual; utteranceActual];
-    
-end
-
-disp('Utterance-level:');
-fprintf('Utterance MAE = %f\n', mae(yUtteranceActual, yUtterancePred));
-fprintf('Baseline MAE = %f\n', mae(yUtteranceActual, yUtteranceBaseline));
