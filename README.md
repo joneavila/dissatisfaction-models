@@ -98,12 +98,12 @@ A k-nearest neighbor classifier using MATLAB's `fitcknn` function. The MAE is
 
 To run from MATLAB: `>>kNNdialogLevel`
 
-## Feature histograms
+## Histograms
 
 Save a histogram for each feature in the train and dev set. Save histograms
 to `frame-level/images`. Here's an example,
 
-![Histogram for Feature 15 "se vo +800 +1600" neutral train+dev, nBins=30](images/histogram.png)
+![Histogram for Feature 1 "se vo -3200 -1600" train+dev, nBins=32](images/histogram1.png)
 
 The feature specification file lays out what features and what windows to use.
 [An example.] For `mono.fss` in particular, window sizes become larger the
@@ -116,6 +116,12 @@ mode. As another example, feat17 through feat30 (creakiness) have skewed
 distributions likely because there is little evidence for creakiness and so the
 distribution skews right. [Do they show that neutral and dissatisfied are significantly
 different?]
+
+The code also generates a histogram for the linear regressor's output on the dev
+set.
+
+![Histogram for linear regressor predictions on dev set, nBins=32](images/histogram2.png)
+
 
 To run from MATLAB: `>> generateHistograms`
 

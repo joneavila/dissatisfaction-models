@@ -75,5 +75,42 @@ for featureNum = 1:size(featureSpec, 2)
     
     clf;
 end
-disp("Done");
+disp("Saved all feature histograms");
 
+%% save a histogram for the linear regressor's predictions on N and D
+regressor = fitlm(Xtrain, yTrain);
+predN = predict(regressor, devNeutral);
+predD = predict(regressor, devDissatisfied);
+
+f = figure('Visible', 'off');
+    
+% histogram for predictions on N
+hPredN = histogram(predN, nBins);
+hPredN.FaceColor = barColorN;
+
+hold on
+
+% histogram for predictions on D
+hPredD = histogram(predD, nBins);
+hPredD.FaceColor = barColorD;
+
+% normalize the histograms so that all bar heights add to 1
+hPredN.Normalization = 'probability';
+hPredD.Normalization = 'probability';
+
+% adjust bars so that both plots align
+hPredN.BinWidth = hPredD.BinWidth;
+hPredN.BinEdges = hPredD.BinEdges;
+
+% add titles, axes labels, and legend
+titleText = 'Linear regressor output';
+subtitleText = sprintf('Predictions on dev set, nBins=%d', nBins);
+title(titleText, subtitleText);
+ylabel('Number in bin');
+xlabel('Bin');
+legend('neutral','dissatisfied')
+
+% save image
+imageFilepath = append(imageDir, titleText, ".png");
+saveas(f, imageFilepath);
+fprintf('Saved regressor output histogram to %s\n', imageFilepath);
