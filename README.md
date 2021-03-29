@@ -31,6 +31,11 @@ from 0 to 1 where 0 is neutral and 1 is dissatisfied, `n` and `nn` are read as
 are on single frames of 10ms. The data is not balanced; there are many more
 neutral labels than dissatisfied labels. [A statistic would be nice.]
 
+### Data sizes
+
+When using 'ja' and 'nw' annotations, **25778** frames in train set and
+**25591** frames in dev set.
+
 ### Frame-level k-NN model
 
 A k-nearest neighbor classifier using MATLAB's `fitcknn` function. Reads labels
@@ -39,12 +44,18 @@ is 0.328 and mean absolute error (MAE) is **0.523**.
 
 To run from MATLAB: `>>kNNframeLevel`
 
-### Frame-level linear regression model and utterance-level model
+### Frame-level linear regression model
 
-A linear regressor using MATLAB's `fitlm` function. Reads labels from annotator
-`ja`. Trains with train set and predicts on dev set. The baseline predicts the
-majority class (in this case 0 for neutral). The frame-level MAE is **0.452**. The baseline MAE is **0.257**. The learned coefficients are saved
-to `coefficients.txt`. Here is a preview of the file,
+A linear regressor using MATLAB's `fitlm` function. Trains with train set and predicts on dev set. The baseline predicts the
+majority class (in this case 0 for neutral).
+
+For 'ja' annotations only. The frame-level MAE is **0.452**. The baseline MAE is
+**0.257**.
+
+For 'ja' and 'nw' annotations. The frame-level MAE is **0.364**. The baseline
+MAE is **0.342**.
+
+The learned coefficients are saved to `coefficients.txt`. Here is a preview of the file,
 
 ```NONE
 Sorted coefficients in descending order with format: coefficient, value, abbreviation
@@ -61,12 +72,19 @@ Sorted coefficients in descending order with format: coefficient, value, abbrevi
 58 | -0.955588 | se th  +800  +1600
 ```
 
-The frame-level linear regression model is also used to predict on utterances.
-The utterance-level model predicts the mean of its frame-level predictions. The
-baseline predicts the mode of its frame-level predictions.
-mode of its frame-level predictions. The utterance-level MAE is **0.344**. The
-baseline MAE is **0.440**. Output for each
-dialog,
+To run from MATLAB: `>> linearRegression`
+
+### Utterance-level model
+
+Predict utterances using frame-level predictions. For each utterance in
+the dev set, the model predicts the mean of the predictions on the frames 
+in that utterance. The baseline predicts the most common annotation for
+all frames in the train set.
+
+For 'ja' annotations. The utterance-level MAE is **0.344**. The
+baseline MAE is **0.327**.
+
+Output for each dialog,
 
 ```NONE
 predicting on 20210115-aa-5f2fad64d1609e000b157ba5-magician-y-y.wav
@@ -89,14 +107,14 @@ predicting on 20210115-aa-5f2fad64d1609e000b157ba5-magician-y-y.wav
        0.36921               0                    0  
 ```
 
-To run from MATLAB: `>>linearRegression`
+To run from MATLAB: `>> utteranceLevel`
 
 ## Dialog-level k-NN model
 
 A k-nearest neighbor classifier using MATLAB's `fitcknn` function. The MAE is
 0.0502. The F1 score is 0. [The baseline has not been written yet.]
 
-To run from MATLAB: `>>kNNdialogLevel`
+To run from MATLAB: `>> kNNdialogLevel`
 
 ## Histograms
 
