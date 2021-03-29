@@ -37,13 +37,7 @@ function [X, y] = getXYfromFile(filename, featureSpec)
     for annotationNum = 1:height(annotationTable)
         
         row = annotationTable(annotationNum, :);
-        
-        % skip if the label is not "n", "nn", "d", or "dd"
-        % TODO check for bad labels
-        if ~strcmp(row.label, "n") && ~strcmp(row.label, "nn") && ...
-                ~strcmp(row.label, "d") && ~strcmp(row.label, "dd")
-            continue;
-        end
+
 
         startFrameMonster = round(milliseconds(row.startTime) / 10);
         endFrameMonster = round(milliseconds(row.endTime) / 10);
