@@ -109,6 +109,11 @@ predicting on 20210115-aa-5f2fad64d1609e000b157ba5-magician-y-y.wav
 
 To run from MATLAB: `>> utteranceLevel`
 
+### Logistic regression model
+
+For 'ja' annotations. Regressor MAE is 0.432. Baseline MAE is 0.257 (same
+baseline as linear regression model).
+
 ## Dialog-level k-NN model
 
 A k-nearest neighbor classifier using MATLAB's `fitcknn` function. The MAE is
