@@ -1,47 +1,44 @@
 function [X, y] = getXYfromFile(filename, featureSpec, useAllAnnotators)
-% GETXYFROMFILE Features are stored in X, labels are stored in y. Only
-% neutral and disappointed labels are used ("n", "nn", "d", "dd").
+% GETXYFROMFILE Features are stored in X, labels are stored in y. If 
+% useAllAnnotators is false, then only 'ja' annotations are used.
 
     % get the annotation filename from the dialog filename, assuming
     % they have the same name
     [~, name, ~] = fileparts(filename);
     annFilename = append(name, ".txt");
+    
+    useFilter = true;
 
     % get the monster
     customerSide = 'l';
     trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
     [~, monster] = makeTrackMonster(trackSpec, featureSpec);
     
-    % If useAllAnnotors is true, X and y are for frames only annotated by
-    % everyone (y is the mean annotations), else X and y are for frames
-    % annotated by 'ja'.
+    tableJA = readElanAnnotation(...
+            append('annotations\ja-annotations\', annFilename), useFilter);
     
     if useAllAnnotators
         
-        tableJA = readElanAnnotation(...
-            append('annotations\ja-annotations\', annFilename), true);
         tableNW = readElanAnnotation(...
-            append('annotations\nw-annotations\', annFilename), true);
+            append('annotations\nw-annotations\', annFilename), useFilter);
         
         % find which frames are annotated by everyone
-        completelyAnnotated = false([size(monster, 1) 1]);
+        annotated = false([size(monster, 1) 1]);
         for frameNum = 1:size(monster, 1)
             if isFrameInTable(frameNum, tableJA) && ...
                     isFrameInTable(frameNum, tableNW)
-                completelyAnnotated(frameNum) = true;
+                annotated(frameNum) = true;
             end
         end
 
-        yJA = getYfromTable(tableJA, monster, completelyAnnotated);
-        yNW = getYfromTable(tableNW, monster, completelyAnnotated);
+        yJA = getYfromTable(tableJA, monster, annotated);
+        yNW = getYfromTable(tableNW, monster, annotated);
 
-        X = monster(completelyAnnotated, :);
+        X = monster(annotated, :);
         y = mean([yJA yNW], 2);
         
     else
         
-        tableJA = readElanAnnotation(...
-            append('annotations\ja-annotations\', annFilename), true);
         annotated = false([size(monster, 1) 1]);
         for frameNum = 1:size(monster, 1)
             if isFrameInTable(frameNum, tableJA)
