@@ -4,6 +4,6 @@ function float = labelToFloat(label)
     elseif strcmp(label, "d") || strcmp(label, "dd")
         float = 1;
     else
-        error("unknown label encountered")
+        error('unknown label encountered: "%s"\n', label);
     end
 end
