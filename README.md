@@ -16,7 +16,11 @@
 
 ## Feature specification file
 
-[It is mono.fss with added 'cp' feature.]
+It is mono.fss from [here] with added 'cp' feature.
+
+## Note
+
+All results are for the dev set.
 
 ## Frame-level models
 
@@ -39,14 +43,14 @@ When using 'ja' and 'nw' annotations, **25778** frames in train set and
 ### Frame-level k-NN model
 
 A k-nearest neighbor classifier using MATLAB's `fitcknn` function. Reads labels
-from annotator `ja`. Trains with train set and predicts on dev set. The F-score
-is 0.328 and mean absolute error (MAE) is **0.523**.
+from annotator `ja`. The F-score
+is 0.353 and mean absolute error (MAE) is **0.560**.
 
-To run from MATLAB: `>>kNNframeLevel`
+To run from MATLAB: `>> kNNframeLevel`
 
 ### Frame-level linear regression model
 
-A linear regressor using MATLAB's `fitlm` function. Trains with train set and predicts on dev set. The baseline predicts the
+A linear regressor using MATLAB's `fitlm` function. The baseline predicts the
 majority class (in this case 0 for neutral).
 
 For 'ja' annotations only. The frame-level MAE is **0.452**. The baseline MAE is
@@ -144,7 +148,6 @@ The code also generates a histogram for the linear regressor's output on the dev
 set.
 
 ![Histogram for linear regressor predictions on dev set, nBins=32](images/histogram2.png)
-
 
 To run from MATLAB: `>> generateHistograms`
 
