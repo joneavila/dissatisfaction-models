@@ -1,4 +1,4 @@
-function score = fScore(yActual, yPred, classPositive, classNegative)
+function [score, precision, recall] = fScore(yActual, yPred, classPositive, classNegative)
 % FSCORE Assumes yActual and yPred are same size.
 
     tp = 0;
@@ -8,8 +8,8 @@ function score = fScore(yActual, yPred, classPositive, classNegative)
     
     for i = 1:length(yActual)
         
-        predicted = yActual{i};
-        actual = yPred{i};
+        predicted = yPred{i};
+        actual = yActual{i};
         
         if isequal(predicted, classPositive)
             if isequal(actual, classPositive)
