@@ -36,7 +36,7 @@ function [score, precision, recall] = fScore(yActual, yPred, classPositive, clas
     precision = tp / (tp + fp);
     recall = tp / (tp + fn);
     beta = 1; % f1 if b=1
-    if precision == 0
+    if precision == 0 || recall == 0
         score = 0;
     else
         score = ((beta^2 + 1) * precision * recall) / (beta^2 * precision + recall);
