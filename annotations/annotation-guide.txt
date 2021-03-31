@@ -1,0 +1,130 @@
+Disappointment Project Annotation Guide
+
+Version 1.1, March 13, Nigel G. Ward
+
+
+=== Purpose ===
+
+We would like a method to automatically detect disappointment in
+dialog, at the frame level.  If we can do this, we can write a paper.
+Our first practical application will be to combine this with simple
+hand-crafted aggregation methods, such as counting the fraction of
+frames that seem disappointed, to solve our sponsor's problem.
+
+We want training data, to overcome the problem of having only
+dialog-level labels that are insufficient for supervised learning.  In
+particular, we want to identify informative regions, likely to be
+usefully informative and worth training on.  Exhaustively labeling
+everything, or striving to accurate categorizing borderline cases, is
+of no interest to us.
+
+We also want data to use for testing purposes.  Ideally this should be
+labeled consistently with the training data, but for evaluation
+purposes slight differences shouldn't much matter.
+
+Our current modeling strategies all assume that there are basically
+two kinds of utterances, disappointed ones, which will be rare in
+sucessful dialogs, and neutral ones, which will dominate in the
+sucessful dialogs, but also be common in doomed dialogs, especially up
+until the point where the merchant presents the first unreasonable
+offer.
+
+Some dialogs also appear to include strong markers: super-disappointed
+utterances, even one of which is a sure indicator of a doomed dialog,
+and super-pleased utterances, even one of which is a sure indicator of
+a successful dialog.  Other dialogs contain neither of these, so
+modeling strategies based on these super-indicators will likely have
+high accuracy but low coverage, unless used in combination.
+
+
+=== Definition ===
+
+For current purposes, the word "disappointment" broadly means any
+indication of a dialog in trouble, that seems locally likely to lead
+to a bad outcome.  This may include feelings, stances, and activities
+like annoyance, indignation, anger, pleading, remonstrance,
+frustration, dismay, sadness, being upset, disengagement,
+exasperation, general negative sentiment, and so on.
+
+We are more interested in the more informative disappointments, namely
+those that show the merchant-side actor is coming to realize that they
+are unlikely to be able to achieve their goal.  Minor disappointments
+--- for example, relating to little misunderstandings, or being asked
+to repeat something, or being offered something undesired --- should
+generally also be marked as disappointment, but this is less critical.
+
+Utterances where the customer-side actor is taking a recovery
+strategy, such as taking a negotiating stance, need not be labeled
+disappointment, unless you feel that their voice indicates that they
+are giving up hope of a successful outcome or abandoning the normal
+strategy of an easy, polite conversation.
+
+Disapointment comes in degrees, but for now we are not interested in
+the subtleties.  If they sound clearly disappointed, even if not
+strongly, it should be marked.  If there is a slight nuance of
+disappointment in their voice, there is no need to mark it.
+
+You can base your decisions on the tone of voice, the words they use,
+the timing of what they say, and on the broader context, including
+what the merchant-side actor just said, and the way the merchant-side
+actor reacts to their utterance.
+
+It is normal for different annotators to have different thresholds and
+criteria.  High agreeement is not needed or expected.  We may attempt
+to predict the number of annotators who label a segment d or dd, so
+variety can be welcome.  Incidentally, agreement may here be measured
+by a varient of Kappa ((achieved agreement - random agreement) /
+(perfect agreement - random agreement)), computed over all frames that
+at least one annotator considers to be n, nn, d or dd.
+
+
+=== Categories ===
+
+d:  disappointed.  
+
+n:  neutral/normal.  Not disappointed. 
+
+?: not clear.  Feel free to use this generously.  There is no need to
+agonize over your decisions. In particular, for unintelligible or very
+short utterances, this label is appropriate.  Again, as our main
+purposes is identifying informative regions, other regions can simply
+have this label.
+
+dd: strongly disappointed.  Use this for super-disappointed utterances.
+
+nn: strongly nondisappointed.  Use this for very pleased utterances,
+for example when the customer gratefully accepts an offer, or shows
+pleasure, or warmth.  Phrases where this might be likely include
+"Great", "Thank you so much", and "have a great day!"
+
+o: out of character.  Use this when the caller breaks out of customer
+role to ask something about the completion code, or otherwise do
+something they wouldn't need to do in an actual call.
+
+
+=== Units ===
+
+Labels should be generally be done by turns.  These may be as short as
+a single word, or as long as several sentences.  It should be fine if
+the units are roughly selected, including some silence, as our
+processes will (soon) be able to take care of, or ignore, those units.
+In particular, turn-internal pauses are not something to worry about.
+Modest errors in identifying the start and end of the speech regions
+are also tolerable.  Starts should be identified a little more
+carefully, since the duration of the lag from a merchant-side offer to
+a customer-side response can be informative. 
+
+If the speaker's tone shifts during a turn, or even during an
+utterance, split that into two regions and label each separately. 
+
+Regions of silence, music, small uninformative sounds, and so on
+should not be labeled.
+
+
+=== File Naming and File Format ===
+
+Do the annotation in Elan, and "export as" a "tab-delimited text",
+taking the defaults.  Give the file the same name as the .wav file,
+with the extention .txt.  (The easy way to do do this is to first
+"save" the annotations as an .eaf extension file.  The basename you
+enter there will be automatically used for the name of the .txt file.)
