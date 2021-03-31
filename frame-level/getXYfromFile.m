@@ -1,5 +1,7 @@
-function [X, y] = getXYfromFile(filename, featureSpec, useAllAnnotators)
-% GETXYFROMFILE Features are stored in X, labels are stored in y. If 
+function [X, y, matchingTimes] = getXYfromFile(filename, ...
+    featureSpec, useAllAnnotators)
+% GETXYFROMFILE Features are stored in X, labels are stored in y. 
+% matchingFrameNums is an array of matching frame indices. If
 % useAllAnnotators is false, then only 'ja' annotations are used.
 
     % get the annotation filename from the dialog filename, assuming
@@ -48,19 +50,27 @@ function [X, y] = getXYfromFile(filename, featureSpec, useAllAnnotators)
         y = getYfromTable(tableJA, monster, annotated);
     end
     
+    matchingFrameNums = find(annotated);
+    
+    matchingTimes = arrayfun(@(frameNum) frameNumToTime(frameNum), matchingFrameNums);
+    
     X = monster(annotated, :);
 
 end
 
-function [inTable, annotation] = isFrameInTable(frameNum, table)
+function time = frameNumToTime(frameNum)
+    time = milliseconds(10) * frameNum;
+end
+
+function [inTable, annotation] = isFrameInTable(frameNum, annTable)
 % ISFRAMEINTABLE inTable is true if the frame is in the annotation, i.e.
 % the frame belongs to a labeled utterance. If inTable is true, annotation
 % is the the assigned label, else annotation is -1.
 
     inTable = false;
     annotation = -1;
-    for rowNum = 1:size(table, 1)
-        row = table(rowNum, :);
+    for rowNum = 1:size(annTable, 1)
+        row = annTable(rowNum, :);
         frameStart = round(milliseconds(row.startTime) / 10);
         frameEnd = round(milliseconds(row.endTime) / 10);
         if frameNum >= frameStart && frameNum <= frameEnd
