@@ -16,140 +16,74 @@
 
 ## Notes
 
-**Results for 'ja' annotations only and predicting on dev set.**
-
-
+**Results for 'ja' annotations only. Results are for dev set unless otherwise stated.**
 
 We took the corpus and annotated customer utterances. See [annotations](annotations). To predict dissatisfaction
 on a scale from 0 to 1 where 0 is neutral (negative class) and 1 is dissatisfied
 (positive class), `n` and `nn` are read as 0, `d` and `dd` are read as 1, and
 all other labels are ignored. See [annotations/annotation-guide.txt](annotations/annotation-guide.txt).
 
-Features used are original mono.fss with added `cp` for same windows.
+Features used are original mono.fss with added `cp` for same windows. See
+[mono.fss](mono.fss). (The linear regression model uses a different spec file,
+with less cp windows.)
 
 The code was written in MATLAB and uses MATLAB's built-in functions for
 performing linear regression, logistic regression, and k-nearest neighbor
 classification.
 
-## Adding all `cp` features to spec file impacts performance, not in a good way. Why?
-Compare the linear regression model's output when using `mono.fss` plus just a
-couple of `cp` features around t=0 versus when using `mono.fss` plus all `cp`
-features (windows) to match the rest of the features.
+## Frame-level model (linear regression)
 
-```NONE
-min(yPred)=-0.254, max(yPred)=1.554
-thresholdMin=-0.25, thresholdMax=1.55, thresholdStep=0.05
-    threshold    precisionLinear    precisionBaseline
-    _________    _______________    _________________
-
-      -0.25          0.25693             0.25692     
-       -0.2            0.257             0.25692     
-      -0.15          0.25725             0.25692     
-       -0.1          0.25801             0.25692     
-      -0.05          0.25909             0.25692     
-          0          0.26046             0.25692     
-       0.05          0.26283             0.25692     
-        0.1          0.26503             0.25692     
-       0.15          0.26552             0.25692     
-        0.2          0.26216             0.25692     
-       0.25          0.25859             0.25692     
-        0.3            0.259             0.25692     
-       0.35          0.26555             0.25692     
-        0.4          0.27456             0.25692     
-       0.45          0.28116             0.25692     
-        0.5          0.29068             0.25692     
-       0.55          0.31103             0.25692     
-        0.6          0.31953             0.25692     
-       0.65          0.32839             0.25692     
-        0.7          0.35629             0.25692     
-       0.75           0.4002             0.25692     
-        0.8          0.43476             0.25692     
-       0.85          0.45255             0.25692     
-        0.9          0.48034             0.25692     
-       0.95          0.55299             0.25692     
-          1          0.65865                 NaN     
-       1.05          0.75896                 NaN     
-        1.1          0.80048                 NaN     
-       1.15          0.86245                 NaN     
-        1.2                1                 NaN     
-       1.25                1                 NaN     
-        1.3                1                 NaN     
-       1.35                1                 NaN     
-        1.4                1                 NaN     
-       1.45                1                 NaN     
-        1.5                1                 NaN     
-
-```
-
-```NONE
-min(yPred)=-0.299, max(yPred)=1.303
-thresholdMin=-0.25, thresholdMax=1.55, thresholdStep=0.05
-    threshold    precisionLinear    precisionBaseline
-    _________    _______________    _________________
-
-      -0.25            0.257             0.25692     
-       -0.2          0.25746             0.25692     
-      -0.15          0.25844             0.25692     
-       -0.1          0.25941             0.25692     
-      -0.05           0.2602             0.25692     
-          0          0.26219             0.25692     
-       0.05          0.26309             0.25692     
-        0.1           0.2623             0.25692     
-       0.15          0.26152             0.25692     
-        0.2          0.25907             0.25692     
-       0.25          0.25435             0.25692     
-        0.3          0.25874             0.25692     
-       0.35          0.26817             0.25692     
-        0.4          0.27048             0.25692     
-       0.45          0.27754             0.25692     
-        0.5          0.28716             0.25692     
-       0.55          0.29301             0.25692     
-        0.6          0.29601             0.25692     
-       0.65          0.29951             0.25692     
-        0.7          0.29761             0.25692     
-       0.75          0.29004             0.25692     
-        0.8          0.29346             0.25692     
-       0.85          0.27577             0.25692     
-        0.9          0.25429             0.25692     
-       0.95          0.21577             0.25692     
-          1          0.19256                 NaN     
-       1.05             0.15                 NaN     
-        1.1          0.12903                 NaN     
-       1.15          0.20896                 NaN     
-        1.2          0.27273                 NaN     
-       1.25             0.75                 NaN     
-        1.3              0.5                 NaN     
-       1.35                0                 NaN     
-        1.4                0                 NaN     
-       1.45                0                 NaN     
-        1.5                0                 NaN   
-```
-
-![regressor output couple cp features](images/regressor-output-couple-cp.png)
-
-![regressor output all cp features](images/regressor-output-all-cp.png)
-
-## Frame-level models
-
-The frame-level models share a train, dev, and test set (`frame-level/train.tl`,
-`frame-level/dev.tl`, and `frame-level/train.tl`, respectively). Each set is 6
+The frame-level models share a train, dev, and test set (see [frame-level/train.tl](frame-level/train.tl),
+[frame-level/dev.tl](frame-level/dev.tl), and [frame-level/test.tl](frame-level/test.tl)). Each set is 6
 dialogs, half labeled as neutral and half labeled as dissatisfied on the
 dialog-level. The dissatisfied dialogs still have many neutral utterances so the
 data is not balanced.
 
-set | `n` or `nn` frames | `d` and `dd` frames | total frames
----   | --- | --- | ---
-train | NUM | NUM | NUM
-dev   | NUM | NUM | NUM
-test  | NUM | NUM | NUM
+set | `n` or `nn` frames | `d` and `dd` frames
+---   | --- | ---
+train | 15894 | 15455
+dev   | 24023 |  8306
+test  | 20458 | 11401
 
-### Majority-class baseline
+The baseline always predicts 1 for perfectly dissatisfied. Results using the
+test set,
 
-The baseline always predicts the majority class (neutral). Its MAE is **NUM**.
+```NONE
+min(yPred)=-0.370, max(yPred)=1.082
+thresholdMin=-0.25, thresholdMax=1.10, thresholdStep=0.05
+    threshold    precisionLinear    precisionBaseline
+    _________    _______________    _________________
 
-### Linear regression model
+      -0.25          0.35715             0.35786     
+       -0.2          0.35637             0.35786     
+      -0.15          0.35705             0.35786     
+       -0.1          0.35707             0.35786     
+      -0.05          0.35753             0.35786     
+          0          0.35645             0.35786     
+       0.05          0.35468             0.35786     
+        0.1          0.35716             0.35786     
+       0.15          0.36362             0.35786     
+        0.2          0.37118             0.35786     
+       0.25          0.38731             0.35786     
+        0.3          0.40919             0.35786     
+       0.35          0.43307             0.35786     
+        0.4          0.46776             0.35786     
+       0.45          0.51799             0.35786     
+        0.5          0.57667             0.35786     
+       0.55          0.63784             0.35786     
+        0.6          0.70028             0.35786     
+       0.65          0.75994             0.35786     
+        0.7          0.80437             0.35786     
+       0.75          0.82166             0.35786     
+        0.8          0.87517             0.35786     
+       0.85          0.94853             0.35786     
+        0.9           0.9951             0.35786     
+       0.95                1             0.35786     
+          1                1                 NaN     
+       1.05                1                 NaN
+```
 
-A linear regressor. The MAE is **NUM**. The learned coefficients are saved to
+The learned coefficients are saved to
 `coefficients.txt`.
 
 ```NONE
@@ -168,25 +102,44 @@ coefficient, value, abbreviation
 58 | -0.935403 | se th  +800  +1600
 ```
 
-Most of the top (first five largest magnitude) features are creakiness, possibly
-because ... The bottom (last five) features are all 'th' and 'tl' relating to
-... possibly because ...
+A histogram of the regressor's output shows frames that are predicted as 1 or
+above are more likely to be dissatisfied than neutral. Those predictions are
+more likely to be correct, so the threshold (used when converting floats back
+into labels) can be set to favor precision.
+![regressor output couple cp features](images/regressor-output-couple-cp.png)
 
-The baseline always predicts 1 for perfectly dissatisfied. (Insert table print
-out with precision values.)
+### Failure analysis
+
+The code finds which frames in the compare set (dev set or
+test set, but using dev set for now) had the largest misclassification, or
+largest difference between `yPred` and `yCompare`. Then clips are created for
+these frames, but only if the frame has not already been included in a clip. The
+misclassification happens at the middle of the clip, i.e. the rest is included
+for context. As an example, here's the output for the second clip,
+
+```NONE
+clip14094  timeSeconds=7.06  filename=20210122-jl-5fa2e888f2ec2d41c1faf2d1-tire-y-y.wav
+      predicted=1.15  actual=0.00
+```
+
+Meaning frame #14094 from the compare set was misclassified, predicted as 1.15 when
+actually 0, and the frame corresponds to 7.06 seconds into
+`20210122-jl-5fa2e888f2ec2d41c1faf2d1-tire-y-y`.
+
+The code generates two clips for each of these. The first one will be named
+`clip14094-1seconds.wav` and the second `clip14094-2seconds`. The number of clips and
+the size of the context can be adjusted.
 
 To run from MATLAB: `>> linearRegression`
 
-### k-NN model
+### Other models
 
 A k-nearest neighbor classifier with number of neighbors 5 and rest of default
-parameters. The F-score is **NUM** and MAE is **NUM**.
+parameters.
 
 To run from MATLAB: `>> kNNframeLevel`
 
-### Logistic regression model
-
-MAE is **NUM**.
+A logistic regressor.
 
 To run from MATLAB: `>> logisticRegression`
 
@@ -212,24 +165,27 @@ To run from MATLAB: `>> kNNdialogLevel`
 ## Histograms
 
 Save a histogram for each feature in the train and dev set. Save histograms
-to `frame-level/images`. Here's an example (replace example),
+to `frame-level/histograms`. Here's an example,
 
-The histograms are normalized so that bar heights add to 1. feat01 through
-feat16 (volume) have bimodal distributions likely because quiet frames like
+![feature-histogram-example](images/feature-histogram-example.png)
+
+The rest of the histograms are in [frame-level/histograms](frame-level/histograms). The histograms are normalized so that bar heights add to 1. `feat01` through
+`feat16` (volume) have bimodal distributions likely because quiet frames like
 those at the start and end of utterances make up the first mode and the average
 speaking volume makes up the second mode. A silent frame is more likely to be
 neutral, possibly because neutral utterances tend to be shorter and the more
 utterances the more silence is introduced at the start and end of those
-utterances. feat17 through feat30 (creakiness) have skewed distributions likely
+utterances. `feat17` through `feat30` (creakiness) have skewed distributions likely
 because there is little evidence for creakiness and so the distribution skews
-right. feat69 through feat78 (wide pitch) distributions show that frames above a
+right. `feat69` through `feat78` (wide pitch) distributions show that frames above a
 threshold (around 0.8, depending on the window) are more likely to be
 dissatisfied, and frames below the threshold are more likely to be neutral.
 Shock might explain some wideness, for example someone saying "What? I thought
 you said..."
 
 The code also generates a histogram for the linear regressor's output on the dev
-set (replace image). This shows that...
+set. (The image is above, in the linear regression section. The code should be
+separated at some point.)
 
 To run from MATLAB: `>> generateHistograms`
 
