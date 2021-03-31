@@ -45,7 +45,7 @@ train | NUM | NUM | NUM
 dev   | NUM | NUM | NUM
 test  | NUM | NUM | NUM
 
-### Baseline
+### Majority-class baseline
 
 The baseline always predicts the majority class (neutral). Its MAE is **NUM**.
 
@@ -73,6 +73,9 @@ coefficient, value, abbreviation
 Most of the top (first five largest magnitude) features are creakiness, possibly
 because ... The bottom (last five) features are all 'th' and 'tl' relating to
 ... possibly because ...
+
+The baseline always predicts 1 for perfectly dissatisfied. (Insert table print
+out with precision values.)
 
 To run from MATLAB: `>> linearRegression`
 
