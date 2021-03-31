@@ -111,20 +111,5 @@ sr   400 to   800 self
 sr   800 to  1600 self
 
 ## smoothed cepstral peak prominence
-cp -3200 to -1600 self
-cp -1600 to  -800 self
-cp  -800 to  -400 self
-cp  -400 to  -300 self
-cp  -300 to  -200 self
-cp  -200 to  -100 self
-cp  -100 to   -50 self
 cp   -50 to     0 self
-
 cp     0 to    50 self
-cp    50 to   100 self
-cp   100 to   200 self
-cp   200 to   300 self
-cp   300 to   400 self
-cp   400 to   800 self
-cp   800 to  1600 self
-cp  1600 to  3200 self
