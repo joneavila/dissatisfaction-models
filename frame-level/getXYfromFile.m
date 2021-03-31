@@ -1,4 +1,4 @@
-function [X, y, matchingTimes] = getXYfromFile(filename, ...
+function [X, y, frameTimes, frameUtterances] = getXYfromFile(filename, ...
     featureSpec, useAllAnnotators)
 % GETXYFROMFILE Features are stored in X, labels are stored in y. 
 % matchingFrameNums is an array of matching frame indices. If
@@ -52,7 +52,10 @@ function [X, y, matchingTimes] = getXYfromFile(filename, ...
     
     matchingFrameNums = find(annotated);
     
-    matchingTimes = arrayfun(@(frameNum) frameNumToTime(frameNum), matchingFrameNums);
+    frameTimes = arrayfun(@(frameNum) frameNumToTime(frameNum), matchingFrameNums);
+    
+    % TODO this is using just 'ja' annotations!
+    frameUtterances = arrayfun(@(frameNum) frameToUtterance(frameNum, tableJA), matchingFrameNums);
     
     X = monster(annotated, :);
 
@@ -60,6 +63,20 @@ end
 
 function time = frameNumToTime(frameNum)
     time = milliseconds(10) * frameNum;
+end
+
+function utteranceNum = frameToUtterance(frameNum, annTable)
+    numRows = size(annTable, 1);
+    utteranceNum = -1;
+    for rowNum = 1:numRows
+        row = annTable(rowNum, :);
+        frameStart = round(milliseconds(row.startTime) / 10);
+        frameEnd = round(milliseconds(row.endTime) / 10);
+        if frameNum >= frameStart && frameNum <= frameEnd
+            utteranceNum = rowNum;
+            return;
+        end
+    end
 end
 
 function [inTable, annotation] = isFrameInTable(frameNum, annTable)
