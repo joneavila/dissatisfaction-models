@@ -18,7 +18,7 @@
 
 **Results for 'ja' annotations only and predicting on dev set.**
 
-**Adding the cp features really messed up results. Why?**
+
 
 We took the corpus and annotated customer utterances. See [annotations](annotations). To predict dissatisfaction
 on a scale from 0 to 1 where 0 is neutral (negative class) and 1 is dissatisfied
@@ -30,6 +30,104 @@ Features used are original mono.fss with added `cp` for same windows.
 The code was written in MATLAB and uses MATLAB's built-in functions for
 performing linear regression, logistic regression, and k-nearest neighbor
 classification.
+
+## Adding all `cp` features to spec file impacts performance, not in a good way. Why?
+Compare the linear regression model's output when using `mono.fss` plus just a
+couple of `cp` features around t=0 versus when using `mono.fss` plus all `cp`
+features (windows) to match the rest of the features.
+
+```NONE
+min(yPred)=-0.254, max(yPred)=1.554
+thresholdMin=-0.25, thresholdMax=1.55, thresholdStep=0.05
+    threshold    precisionLinear    precisionBaseline
+    _________    _______________    _________________
+
+      -0.25          0.25693             0.25692     
+       -0.2            0.257             0.25692     
+      -0.15          0.25725             0.25692     
+       -0.1          0.25801             0.25692     
+      -0.05          0.25909             0.25692     
+          0          0.26046             0.25692     
+       0.05          0.26283             0.25692     
+        0.1          0.26503             0.25692     
+       0.15          0.26552             0.25692     
+        0.2          0.26216             0.25692     
+       0.25          0.25859             0.25692     
+        0.3            0.259             0.25692     
+       0.35          0.26555             0.25692     
+        0.4          0.27456             0.25692     
+       0.45          0.28116             0.25692     
+        0.5          0.29068             0.25692     
+       0.55          0.31103             0.25692     
+        0.6          0.31953             0.25692     
+       0.65          0.32839             0.25692     
+        0.7          0.35629             0.25692     
+       0.75           0.4002             0.25692     
+        0.8          0.43476             0.25692     
+       0.85          0.45255             0.25692     
+        0.9          0.48034             0.25692     
+       0.95          0.55299             0.25692     
+          1          0.65865                 NaN     
+       1.05          0.75896                 NaN     
+        1.1          0.80048                 NaN     
+       1.15          0.86245                 NaN     
+        1.2                1                 NaN     
+       1.25                1                 NaN     
+        1.3                1                 NaN     
+       1.35                1                 NaN     
+        1.4                1                 NaN     
+       1.45                1                 NaN     
+        1.5                1                 NaN     
+
+```
+
+```NONE
+min(yPred)=-0.299, max(yPred)=1.303
+thresholdMin=-0.25, thresholdMax=1.55, thresholdStep=0.05
+    threshold    precisionLinear    precisionBaseline
+    _________    _______________    _________________
+
+      -0.25            0.257             0.25692     
+       -0.2          0.25746             0.25692     
+      -0.15          0.25844             0.25692     
+       -0.1          0.25941             0.25692     
+      -0.05           0.2602             0.25692     
+          0          0.26219             0.25692     
+       0.05          0.26309             0.25692     
+        0.1           0.2623             0.25692     
+       0.15          0.26152             0.25692     
+        0.2          0.25907             0.25692     
+       0.25          0.25435             0.25692     
+        0.3          0.25874             0.25692     
+       0.35          0.26817             0.25692     
+        0.4          0.27048             0.25692     
+       0.45          0.27754             0.25692     
+        0.5          0.28716             0.25692     
+       0.55          0.29301             0.25692     
+        0.6          0.29601             0.25692     
+       0.65          0.29951             0.25692     
+        0.7          0.29761             0.25692     
+       0.75          0.29004             0.25692     
+        0.8          0.29346             0.25692     
+       0.85          0.27577             0.25692     
+        0.9          0.25429             0.25692     
+       0.95          0.21577             0.25692     
+          1          0.19256                 NaN     
+       1.05             0.15                 NaN     
+        1.1          0.12903                 NaN     
+       1.15          0.20896                 NaN     
+        1.2          0.27273                 NaN     
+       1.25             0.75                 NaN     
+        1.3              0.5                 NaN     
+       1.35                0                 NaN     
+        1.4                0                 NaN     
+       1.45                0                 NaN     
+        1.5                0                 NaN   
+```
+
+![regressor output couple cp features](images/regressor-output-couple-cp.png)
+
+![regressor output all cp features](images/regressor-output-all-cp.png)
 
 ## Frame-level models
 
