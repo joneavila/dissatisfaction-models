@@ -13,9 +13,12 @@ function [X, y] = getXYfromFile(filename, featureSpec, useAllAnnotators)
     customerSide = 'l';
     trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
     [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+    nFrames = size(monster, 1);
     
     tableJA = readElanAnnotation(...
             append('annotations\ja-annotations\', annFilename), useFilter);
+    
+    annotated = false([nFrames 1]);
     
     if useAllAnnotators
         
@@ -23,7 +26,6 @@ function [X, y] = getXYfromFile(filename, featureSpec, useAllAnnotators)
             append('annotations\nw-annotations\', annFilename), useFilter);
         
         % find which frames are annotated by everyone
-        annotated = false([size(monster, 1) 1]);
         for frameNum = 1:size(monster, 1)
             if isFrameInTable(frameNum, tableJA) && ...
                     isFrameInTable(frameNum, tableNW)
@@ -33,26 +35,28 @@ function [X, y] = getXYfromFile(filename, featureSpec, useAllAnnotators)
 
         yJA = getYfromTable(tableJA, monster, annotated);
         yNW = getYfromTable(tableNW, monster, annotated);
-
-        X = monster(annotated, :);
         y = mean([yJA yNW], 2);
         
     else
         
-        annotated = false([size(monster, 1) 1]);
         for frameNum = 1:size(monster, 1)
             if isFrameInTable(frameNum, tableJA)
                 annotated(frameNum) = true;
             end
         end
-        X = monster(annotated, :);
+
         y = getYfromTable(tableJA, monster, annotated);
     end
+    
+    X = monster(annotated, :);
 
 end
 
-% Returns annotation if in table, else returns -1
 function [inTable, annotation] = isFrameInTable(frameNum, table)
+% ISFRAMEINTABLE inTable is true if the frame is in the annotation, i.e.
+% the frame belongs to a labeled utterance. If inTable is true, annotation
+% is the the assigned label, else annotation is -1.
+
     inTable = false;
     annotation = -1;
     for rowNum = 1:size(table, 1)
