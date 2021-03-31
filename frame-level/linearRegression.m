@@ -140,13 +140,14 @@ for i = 1:numFramesToProbe
         timeEnd = frameTime + seconds(clipSizeSeconds/2);
         idxStart = round(seconds(timeStart) * sampleRate);
         idxEnd = round(seconds(timeEnd) * sampleRate);
-        newFilename = sprintf('%s\\clip%d-%dseconds.wav', clipDir, i, j);
+        newFilename = sprintf('%s\\clip%d-%dseconds.wav', clipDir, frameNumCompare, j);
         clipData = audioData(idxStart:idxEnd);
         audiowrite(newFilename, clipData, sampleRate);
     end
     
-    fprintf('clip%d | time=%s | trackFilename=%s\n', ...
-        i, char(frameTime), track.filename);
+    fprintf('clip%d  timeSeconds=%.2f  filename=%s\n', ...
+        frameNumCompare, seconds(frameTime), track.filename);
+    fprintf('\tpredicted=%.2f  actual=%.2f\n', yPred(frameNumCompare), yCompare(frameNumCompare));
     
     % zero out the 
     % check if any other frame number is within this frame's utterance
