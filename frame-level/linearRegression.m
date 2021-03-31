@@ -1,39 +1,46 @@
 % linearRegression.m Frame-level linear regression model
 
-featureSpec = getfeaturespec('.\mono.fss');
+%% prepare the data
+trackListTrain = gettracklist('.\frame-level\train.tl');
+trackListDev = gettracklist('.\frame-level\dev.tl');
+trackListTest = gettracklist('.\frame-level\test.tl');
 
-trackListTrain = gettracklist(".\frame-level\train.tl");
-trackListDev = gettracklist(".\frame-level\dev.tl");
+featureSpec = getfeaturespec('.\mono2.fss'); % TODO use final spec file
 
 useAllAnnotators = false;
-[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec, useAllAnnotators);
-[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
 
+[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec, ...
+    useAllAnnotators);
+[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec, ...
+    useAllAnnotators);
+[Xtest, yTest] = getXYfromTrackList(trackListTest, featureSpec, ...
+    useAllAnnotators);
 %% train regressor
 model = fitlm(Xtrain, yTrain);
 
-% save coefficient info to a text file
+%% save coefficient info to a text file
 outputFilename = 'coefficients.txt';
 fileID = fopen(outputFilename, 'w');
 coefficients = model.Coefficients.Estimate;
 coefficients(1) = []; % discard the first coefficient (intercept)
 [coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
-fprintf(fileID,'Sorted coefficients in descending order with format: coefficient, value, abbreviation\n');
+fprintf(fileID, 'Coefficients in descending order with format:\n');
+fprintf(fileID, 'coefficient, value, abbreviation\n');
 for coeffNum = 1:length(coefficients)
     coeff = coeffSortedIdx(coeffNum);
     coeffValue = coefficientSorted(coeffNum);
-    fprintf(fileID, '%2d | %f | %s\n', coeff, coeffValue, featureSpec(coeff).abbrev);
+    fprintf(fileID, '%2d | %f | %s\n', coeff, coeffValue, ...
+        featureSpec(coeff).abbrev);
 end
 fclose(fileID);
 fprintf('Coefficients saved to %s\\%s\n', pwd, outputFilename);
 
-mae = @(A, B) (mean(abs(A - B)));
-
-%%
-% let the regressor predict on the dev set
-%% TODO loop and print table with threshold values
+%%  predict on the dev set
 yPred = predict(model, Xdev);
 
+% the baseline always predicts dissatisfied (positive class)
+yBaseline = ones([size(Xdev, 1), 1]);
+%% print f1 score and more for different thresholds
 thresholdMin = -0.25;
 thresholdMax = 1.55;
 thresholdStep = 0.05;
@@ -41,31 +48,29 @@ thresholdStep = 0.05;
 fprintf('min(yPred)=%.3f, max(yPred)=%.3f\n', min(yPred), max(yPred));
 fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', thresholdMin, thresholdMax, thresholdStep);
 fprintf('negative class ("successful") if <= threshold, else positive class ("doomed")\n');
-yDevLabel = arrayfun(@(x) floatToLabel(x, 0.5), yDev, 'UniformOutput', false);
+
+thresholdDev = 0.5;
+yDevLabel = arrayfun(@(x) floatToLabel(x, thresholdDev), yDev, 'UniformOutput', false);
 
 nSteps = (thresholdMax - thresholdMin) / thresholdStep;
-thresholds = zeros([nSteps 1]);
-precisions = zeros([nSteps 1]);
-recalls = zeros([nSteps 1]);
-f1scores = zeros([nSteps 1]);
+threshold = zeros([nSteps 1]);
+precisionLinear = zeros([nSteps 1]);
+precisionBaseline = zeros([nSteps 1]);
 
-threshold = thresholdMin;
+thresholdSel = thresholdMin;
 for i = 1:nSteps
-    threshold = round(threshold, 2);
-    yPredLabel = arrayfun(@(x) floatToLabel(x, threshold), yPred, 'UniformOutput', false);
-    [score, precision, recall] = fScore(yDevLabel, yPredLabel, 'doomed', 'successful');
-    thresholds(i) = threshold;
-    precisions(i) = precision;
-    recalls(i) = recall;
-    f1scores(i) = score;
-    threshold = threshold + thresholdStep;
+    thresholdSel = round(thresholdSel, 2);
+    yPredLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), yPred, 'UniformOutput', false);
+    yBaselineLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), yBaseline, 'UniformOutput', false);
+    [~, precLinear, ~] = fScore(yDevLabel, yPredLabel, 'doomed', 'successful');
+    [~, precBaseline, ~] = fScore(yDevLabel, yBaselineLabel, 'doomed', 'successful');
+    threshold(i) = thresholdSel;
+    precisionLinear(i) = precLinear;
+    precisionBaseline(i) = precBaseline;
+    thresholdSel = thresholdSel + thresholdStep;
 end
-disp(table(thresholds, precisions, recalls, f1scores));
+disp(table(threshold, precisionLinear, precisionBaseline));
 %%
-
-% the baseline predicts the majority class (the data is not balanced)
-yBaseline = ones([size(Xdev, 1), 1]) * mode(yTrain);
-
-disp('Frame-level:');
-fprintf('Regressor MAE = %f\n', mae(yDev, yPred));
-fprintf('Baseline MAE = %f\n', mae(yDev, yBaseline));
+% mae = @(A, B) (mean(abs(A - B)));
+% fprintf('Regressor MAE = %f\n', mae(yDev, yPred));
+% fprintf('Baseline MAE = %f\n', mae(yDev, yBaseline));
