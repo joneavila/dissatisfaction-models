@@ -1,7 +1,7 @@
 % generateHistograms.m Save a histogram of each feature in feature spec. 
 % Use the train and dev set.
 
-featureSpec = getfeaturespec('.\mono.fss');
+featureSpec = getfeaturespec('.\mono-simple.fss');
 
 trackListTrain = gettracklist(".\frame-level\train.tl");
 trackListDev = gettracklist(".\frame-level\dev.tl");
@@ -9,7 +9,7 @@ trackListDev = gettracklist(".\frame-level\dev.tl");
 % get X (monster regions) and Y (labels)
 [Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec);
 [Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec);
-
+%%
 % 'n' and 'nn' are the negative class (0), 'd' and 'dd' are the positive
 % class (1)
 trainNeutral = Xtrain(yTrain==0, :);
@@ -21,15 +21,15 @@ devDissatisfied = Xdev(yDev==1, :);
 % t-test will compare neutral and dissatisfied
 N = [trainNeutral; devNeutral];
 D = [trainDissatisfied; devDissatisfied];
-
-%% save a histogram for each feature
-
+%%
 % config
+imageDir = append(pwd, "\frame-level\histograms\");
 nBins = 32;
 barColorN = '#1e88e5'; % blue
 barColorD = '#fb8c00'; % orange
 
-imageDir = append(pwd, "\frame-level\histograms\");
+%% save a histogram for each feature
+
 status = mkdir(imageDir);
 if ~status
     error("Error creating image directory");
@@ -61,8 +61,8 @@ for featureNum = 1:size(featureSpec, 2)
     
     % add titles, axes labels, and legend
     feature = featureSpec(featureNum);
-    titleText = sprintf('feat%02d %s (normalized)', featureNum, feature.abbrev);
-    subtitleText = sprintf('train+dev, nBins=%d', nBins);
+    titleText = sprintf('feat%02d %s', featureNum, feature.abbrev);
+    subtitleText = sprintf('train+dev, nBins=%d, normalized bars', nBins);
     title(titleText, subtitleText);
     ylabel('Number in bin');
     xlabel('Bin');
