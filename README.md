@@ -1,25 +1,29 @@
-# Models for detecting dissatisfaction in dialog
+# Detecting dissatisfaction in spoken dialog
 
 ## Set up
 
-1. Clone this repo or download it as a ZIP and extract. Open the
-`dissatisfaction-models` in MATLAB and add the folder and its subfolders to
-Path.
+1. Clone this repo or download it as a ZIP and extract.
 1. Download The UTEP Corpus of Dissatisfaction in Spoken Dialog at
    <https://github.com/joneavila/utep-dissatisfaction-corpus>. Place the `calls`
    folder and `call-log.xlsx` in the root of this project.
 1. Download Midlevel Prosodic Features Toolkit at
    <https://github.com/nigelgward/midlevel>. Place the `midlevel-master` folder
    in the root of this project.
+1. Open this project
+(`dissatisfaction-models` folder) in MATLAB and add the folder and its subfolders to
+   Path. Right-click the folder in the Current Folder window or use the
+   [addpath](https://www.mathworks.com/help/matlab/ref/addpath.html) function.
 
 ## Notes
 
 **Results for 'ja' annotations only and predicting on dev set.**
 
-We took the corpus and annotated customer utterances. To predict dissatisfaction
+**Adding the cp features really messed up results. Why?**
+
+We took the corpus and annotated customer utterances. See [annotations](annotations). To predict dissatisfaction
 on a scale from 0 to 1 where 0 is neutral (negative class) and 1 is dissatisfied
 (positive class), `n` and `nn` are read as 0, `d` and `dd` are read as 1, and
-all other labels are ignored. See annotation guide (not in this repo yet).
+all other labels are ignored. See [annotations/annotation-guide.txt](annotations/annotation-guide.txt).
 
 Features used are original mono.fss with added `cp` for same windows.
 
@@ -71,6 +75,7 @@ because ... The bottom (last five) features are all 'th' and 'tl' relating to
 ... possibly because ...
 
 To run from MATLAB: `>> linearRegression`
+
 ### k-NN model
 
 A k-nearest neighbor classifier with number of neighbors 5 and rest of default
