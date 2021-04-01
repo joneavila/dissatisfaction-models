@@ -1,28 +1,54 @@
-%% utteranceLevel.m 
-% Predict utterances using frame-level predictions. For each utterance in
-% the dev set, the model predicts the mean of the predictions on the frames 
-% in that utterance. The baseline predicts the most common annotation for
-% all frames in the train set.
+% utteranceLevel.m 
+% Predict utterances using linear regressor's frame-level predictions. For 
+% each utterance in the compare set, this model predicts the mean of the 
+% predictions on the frames in that utterance. The baseline predicts the 
+% most common annotation for all frames in the train set.
+
+%% prepare the data 
+useTestSet = true;
+
+trackListTrain = gettracklist('.\frame-level\train.tl');
+trackListDev = gettracklist('.\frame-level\dev.tl');
+trackListTest = gettracklist('.\frame-level\test.tl');
 
 featureSpec = getfeaturespec('.\mono.fss');
 
-trackListTrain = gettracklist(".\frame-level\train.tl");
-trackListDev = gettracklist(".\frame-level\dev.tl");
-
 useAllAnnotators = false;
-[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec, useAllAnnotators);
-[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
 
-%%
-model = fitlm(Xtrain, yTrain); % train regressor
+% [Xtrain, yTrain, frameTrackNumsTrain, frameTimesTrain, frameUtterancesTrain] = ...
+%     getXYfromTrackList(trackListTrain, featureSpec, useAllAnnotators);
+% [Xdev, yDev, frameTrackNumsDev, frameTimesDev, frameUtterancesDev] = ...
+%     getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
+% [Xtest, yTest, frameTrackNumsTest, frameTimesTest, frameUtterancesTest] = ...
+%     getXYfromTrackList(trackListTest, featureSpec, useAllAnnotators);
 
-yUtterancePred = [];
-yUtteranceActual = [];
+if useTestSet
+    Xcompare = Xtest;
+    yCompare = yTest;
+    frameTrackNumsCompare = frameTrackNumsTest;
+    frameTimesCompare = frameTimesTest;
+    frameUtterancesCompare = frameUtterancesTest;
+    trackListCompare = trackListTest;
+else
+    Xcompare = Xdev;
+    yCompare = yDev;
+    frameTrackNumsCompare = frameTrackNumsDev;
+    frameTimesCompare = frameTimesDev;
+    frameUtterancesCompare = frameUtterancesDev;
+    trackListCompare = trackListDev;
+end
 
-nTracks = size(trackListTrain, 2);
+%% train
+model = fitlm(Xtrain, yTrain);
+
+%% predict on each utterance in the compare set
+yPred = [];
+yActual = [];
+
+nTracks = size(trackListCompare, 2);
 for trackNum = 1:nTracks
     
-    track = trackListTrain{trackNum};
+    track = trackListCompare{trackNum};
     fprintf("predicting on %s\n", track.filename)
     
     % get the annotation filename from the dialog filename, assuming
@@ -59,14 +85,63 @@ for trackNum = 1:nTracks
     disp(table(utterancePred, utteranceActual));
 
     % appending is ugly but isn't too slow here
-    yUtterancePred = [yUtterancePred; utterancePred];
-    yUtteranceActual = [yUtteranceActual; utteranceActual];
+    yPred = [yPred; utterancePred];
+    yActual = [yActual; utteranceActual];
     
 end
-%%
-yUtteranceBaseline = zeros(size(yUtteranceActual)); % TODO hardcoded 'neutral'
+%% baseline
+% this baseline always predicts 1 for perfectly dissatisfied and should be
+% compared with using precision
+yBaseline = ones(size(yActual));
+%% print f1 score and more for different thresholds
+thresholdMin = -0.25;
+thresholdMax = 1.1;
+thresholdStep = 0.05;
 
-mae = @(A, B) (mean(abs(A - B)));
-disp('Utterance-level:');
-fprintf('Utterance MAE = %f\n', mae(yUtteranceActual, yUtterancePred));
-fprintf('Baseline MAE = %f\n', mae(yUtteranceActual, yUtteranceBaseline));
+fprintf('min(yPred)=%.3f, max(yPred)=%.3f\n', min(yPred), max(yPred));
+fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', ...
+    thresholdMin, thresholdMax, thresholdStep);
+
+thresholdCompare = 0.5;
+yActualLabel = arrayfun(@(x) floatToLabel(x, thresholdCompare), yActual, ...
+    'UniformOutput', false);
+
+nSteps = (thresholdMax - thresholdMin) / thresholdStep;
+threshold = zeros([nSteps 1]);
+precisionUtterance = zeros([nSteps 1]);
+precisionBaseline = zeros([nSteps 1]);
+recallUtterance = zeros([nSteps 1]);
+recallBaseline = zeros([nSteps 1]);
+scoreUtterance = zeros([nSteps 1]);
+scoreBaseline = zeros([nSteps 1]);
+
+thresholdSel = thresholdMin;
+for i = 1:nSteps
+    thresholdSel = round(thresholdSel, 2);
+    yPredLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), yPred, ...
+        'UniformOutput', false);
+    yBaselineLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), ...
+        yBaseline, 'UniformOutput', false);
+    [scoLinear, precLinear, recLinear] = fScore(yActualLabel, ...
+        yPredLabel, 'doomed', 'successful');
+    [scoBaseline, precBaseline, recBaseline] = fScore(yActualLabel, ...
+        yBaselineLabel, 'doomed', 'successful');
+    threshold(i) = thresholdSel;
+    precisionUtterance(i) = precLinear;
+    precisionBaseline(i) = precBaseline;
+    
+    recallUtterance(i) = recLinear;
+    recallBaseline(i) = recBaseline;
+    
+    scoreUtterance(i) = scoLinear;
+    scoreBaseline(i) = scoBaseline;
+    
+    thresholdSel = thresholdSel + thresholdStep;
+end
+disp(table(threshold, precisionUtterance, precisionBaseline, recallUtterance, ...
+    recallBaseline, scoreUtterance, scoreBaseline));
+%%
+% mae = @(A, B) (mean(abs(A - B)));
+% disp('Utterance-level:');
+% fprintf('Utterance MAE = %f\n', mae(yUtteranceActual, yUtterancePred));
+% fprintf('Baseline MAE = %f\n', mae(yUtteranceActual, yUtteranceBaseline));
