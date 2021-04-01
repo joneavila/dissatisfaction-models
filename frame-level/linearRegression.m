@@ -7,7 +7,7 @@ trackListTrain = gettracklist('.\frame-level\train.tl');
 trackListDev = gettracklist('.\frame-level\dev.tl');
 trackListTest = gettracklist('.\frame-level\test.tl');
 
-featureSpec = getfeaturespec('.\mono-simple.fss');
+featureSpec = getfeaturespec('.\mono.fss');
 
 useAllAnnotators = false;
 
@@ -175,5 +175,5 @@ end
 
 %%
 % mae = @(A, B) (mean(abs(A - B)));
-% fprintf('Regressor MAE = %f\n', mae(yDev, yPred));
-% fprintf('Baseline MAE = %f\n', mae(yDev, yBaseline));
+% fprintf('Regressor MAE = %f\n', mae(yCompare, yPred));
+% fprintf('Baseline MAE = %f\n', mae(yCompare, yBaseline));
