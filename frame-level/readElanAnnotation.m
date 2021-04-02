@@ -1,7 +1,8 @@
-% read frame-level annotations from default ELAN tab-delimited 
-% export to MATLAB table
+function annotationTable = readElanAnnotation(pathRelative, useFilter)
+% READELANANNOTATION Read utterance annotations from default ELAN 
+% tab-delimited export to MATLAB table. If useFilter is true, regions 
+% labeled other as neutral and disappointed are ignored.
 
-function annotationTable = readElanAnnotation(pathRelative, filter)
     importOptions = delimitedTextImportOptions( ...
         'Delimiter', {'\t'}, ...
         'VariableNames', {'tier', 'startTime', 'startTimeShort', 'endTime', 'endTimeShort', 'duration', 'durationShort', 'label'}, ...
@@ -15,7 +16,7 @@ function annotationTable = readElanAnnotation(pathRelative, filter)
     
     % if filter argument was passed, delete rows with labels other than "n"
     % "nn" "d" or "dd"
-    if filter
+    if useFilter
         toDelete = ismember(annotationTable.label, ["n" "nn" "d" "dd"]);
         annotationTable(~toDelete, :) = [];
     end
