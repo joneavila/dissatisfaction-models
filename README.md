@@ -44,6 +44,12 @@ train | 15894 | 15455
 dev   | 24023 |  8306
 test  | 20458 | 11401
 
+set   | num neutral utter   | num dissatisfied utter
+---   | ---                 | ---
+train | 35 (`n`=35, `nn`=0) | 17 (`d`=15, `dd`=2)
+dev   | 45 (`n`=42, `nn`=3) | 14 (`d`=12, `dd`=2)
+test  | 28 (`n`=27, `nn`=1) | 13 (`d`=11, `dd`=2)
+
 The baseline always predicts 1 for perfectly dissatisfied. Results using th
 test set,
 
