@@ -23,9 +23,8 @@ on a scale from 0 to 1 where 0 is neutral (negative class) and 1 is dissatisfied
 (positive class), `n` and `nn` are read as 0, `d` and `dd` are read as 1, and
 all other labels are ignored. See [annotations/annotation-guide.txt](annotations/annotation-guide.txt).
 
-Features used are original mono.fss with added `cp` for same windows. See
-[mono.fss](mono.fss). (The linear regression model uses a different spec file,
-with less cp windows.)
+Features used are original mono.fss with a couple added `cp` for same windows. See
+[mono.fss](mono.fss).
 
 The code was written in MATLAB and uses MATLAB's built-in functions for
 performing linear regression, logistic regression, and k-nearest neighbor
@@ -45,7 +44,7 @@ train | 15894 | 15455
 dev   | 24023 |  8306
 test  | 20458 | 11401
 
-The baseline always predicts 1 for perfectly dissatisfied. Results using the
+The baseline always predicts 1 for perfectly dissatisfied. Results using th
 test set,
 
 ```NONE
@@ -84,22 +83,23 @@ thresholdMin=-0.25, thresholdMax=1.10, thresholdStep=0.05
 ```
 
 The learned coefficients are saved to
-`coefficients.txt`.
+[frame-level/coefficients.txt](frame-level/coefficients.txt). Here is a preview,
 
 ```NONE
 Coefficients in descending order with format:
 coefficient, value, abbreviation
-17 | 1.223681 | se cr -1600 -800
-30 | 0.996185 | se cr  +800  +1600
-29 | 0.517663 | se cr  +400  +800
-18 | 0.506640 | se cr -800 -400
-16 | 0.161338 | se vo  +1600  +3200
+17 | 1.095255 | se cr -1600 -800
+30 | 0.823192 | se cr  +800  +1600
+29 | 0.454553 | se cr  +400  +800
+18 | 0.441643 | se cr -800 -400
+16 | 0.153702 | se vo  +1600  +3200
 ...
-57 | -0.281625 | se th  +400  +800
-31 | -0.381581 | se tl -1600 -800
-45 | -0.449197 | se th -1600 -800
-44 | -0.451788 | se tl  +800  +1600
-58 | -0.935403 | se th  +800  +1600
+57 | -0.362874 | se th  +400  +800
+44 | -0.450443 | se tl  +800  +1600
+31 | -0.458688 | se tl -1600 -800
+45 | -0.486661 | se th -1600 -800
+58 | -0.976640 | se th  +800  +1600
+
 ```
 
 A histogram of the regressor's output shows frames that are predicted as 1 or
