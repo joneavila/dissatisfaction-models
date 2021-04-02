@@ -1,4 +1,4 @@
-/calls/calls-transformed/
+./calls/
 # test set neutral (3 dialogs)
 l 20210118-ja-5eb350c50f432115af792bf9-tire-n-n.wav
 l 20210118-ja-5e8b62e78dddff0287b5dd7d-tire-n-n.wav
