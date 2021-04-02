@@ -36,7 +36,7 @@ The frame-level models share a train, dev, and test set (see [frame-level/train.
 [frame-level/dev.tl](frame-level/dev.tl), and [frame-level/test.tl](frame-level/test.tl)). Each set is 6
 dialogs, half labeled as neutral and half labeled as dissatisfied on the
 dialog-level. The dissatisfied dialogs still have many neutral utterances so the
-data is not balanced.
+data is not balanced. The tables below use stats from [corpusStats.m](corpusStats.m).
 
 set | `n` or `nn` frames | `d` and `dd` frames
 ---   | --- | ---
