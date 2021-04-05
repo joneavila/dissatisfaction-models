@@ -36,7 +36,7 @@ The frame-level models share a train, dev, and test set (see [frame-level/train.
 [frame-level/dev.tl](frame-level/dev.tl), and [frame-level/test.tl](frame-level/test.tl)). Each set is 6
 dialogs, half labeled as neutral and half labeled as dissatisfied on the
 dialog-level. The dissatisfied dialogs still have many neutral utterances so the
-data is not balanced. The tables below use stats from [corpusStats.m](corpusStats.m).
+data is not balanced. The tables below use results from [corpusStats.m](corpusStats.m).
 
 set | `n` or `nn` frames | `d` and `dd` frames
 ---   | --- | ---
@@ -50,61 +50,60 @@ train | 35 (`n`=35, `nn`=0) | 17 (`d`=15, `dd`=2)
 dev   | 45 (`n`=42, `nn`=3) | 14 (`d`=12, `dd`=2)
 test  | 28 (`n`=27, `nn`=1) | 13 (`d`=11, `dd`=2)
 
-The baseline always predicts 1 for perfectly dissatisfied. Results using th
-test set,
+The baseline always predicts 1 for perfectly dissatisfied. Results on the test set,
 
 ```NONE
 min(yPred)=-0.370, max(yPred)=1.082
 thresholdMin=-0.25, thresholdMax=1.10, thresholdStep=0.05
-    threshold    precisionLinear    precisionBaseline
-    _________    _______________    _________________
+    threshold    precisionLinear    precisionBaseline    recallLinear    recallBaseline    scoreLinear    scoreBaseline
+    _________    _______________    _________________    ____________    ______________    ___________    _____________
 
-      -0.25          0.35715             0.35786     
-       -0.2          0.35637             0.35786     
-      -0.15          0.35705             0.35786     
-       -0.1          0.35707             0.35786     
-      -0.05          0.35753             0.35786     
-          0          0.35645             0.35786     
-       0.05          0.35468             0.35786     
-        0.1          0.35716             0.35786     
-       0.15          0.36362             0.35786     
-        0.2          0.37118             0.35786     
-       0.25          0.38731             0.35786     
-        0.3          0.40919             0.35786     
-       0.35          0.43307             0.35786     
-        0.4          0.46776             0.35786     
-       0.45          0.51799             0.35786     
-        0.5          0.57667             0.35786     
-       0.55          0.63784             0.35786     
-        0.6          0.70028             0.35786     
-       0.65          0.75994             0.35786     
-        0.7          0.80437             0.35786     
-       0.75          0.82166             0.35786     
-        0.8          0.87517             0.35786     
-       0.85          0.94853             0.35786     
-        0.9           0.9951             0.35786     
-       0.95                1             0.35786     
-          1                1                 NaN     
-       1.05                1                 NaN
+      -0.25          0.35715             0.35786            0.99518            1              0.52565        0.52709   
+       -0.2          0.35637             0.35786            0.99035            1              0.52414        0.52709   
+      -0.15          0.35705             0.35786            0.98869            1              0.52463        0.52709   
+       -0.1          0.35707             0.35786            0.98237            1              0.52377        0.52709   
+      -0.05          0.35753             0.35786            0.97255            1              0.52285        0.52709   
+          0          0.35645             0.35786            0.95114            1              0.51857        0.52709   
+       0.05          0.35468             0.35786            0.91632            1              0.51141        0.52709   
+        0.1          0.35716             0.35786             0.8872            1              0.50929        0.52709   
+       0.15          0.36362             0.35786            0.85589            1               0.5104        0.52709   
+        0.2          0.37118             0.35786            0.80835            1              0.50875        0.52709   
+       0.25          0.38731             0.35786            0.75985            1              0.51309        0.52709   
+        0.3          0.40919             0.35786            0.70845            1              0.51875        0.52709   
+       0.35          0.43307             0.35786            0.64187            1              0.51719        0.52709   
+        0.4          0.46776             0.35786            0.56688            1              0.51257        0.52709   
+       0.45          0.51799             0.35786            0.49127            1              0.50428        0.52709   
+        0.5          0.57667             0.35786            0.42286            1              0.48793        0.52709   
+       0.55          0.63784             0.35786            0.34865            1              0.45086        0.52709   
+        0.6          0.70028             0.35786            0.28199            1              0.40208        0.52709   
+       0.65          0.75994             0.35786             0.2113            1              0.33066        0.52709   
+        0.7          0.80437             0.35786            0.14534            1              0.24619        0.52709   
+       0.75          0.82166             0.35786           0.090518            1              0.16307        0.52709   
+        0.8          0.87517             0.35786           0.055346            1              0.10411        0.52709   
+       0.85          0.94853             0.35786           0.033944            1             0.065543        0.52709   
+        0.9           0.9951             0.35786           0.017805            1             0.034985        0.52709   
+       0.95                1             0.35786          0.0085957            1             0.017045        0.52709   
+          1                1                 NaN          0.0040347            0             0.008037              0   
+       1.05                1                 NaN          0.0013157            0            0.0026279              0
 ```
 
 The learned coefficients are saved to
-[frame-level/coefficients.txt](frame-level/coefficients.txt). Here is a preview (this preview is outdated, see .txt file instead),
+[frame-level/coefficients.txt](frame-level/coefficients.txt). Here is a preview,
 
 ```NONE
 Coefficients in descending order with format:
 coefficient, value, abbreviation
-17 | 1.095255 | se cr -1600 -800
-30 | 0.823192 | se cr  +800  +1600
-29 | 0.454553 | se cr  +400  +800
-18 | 0.441643 | se cr -800 -400
-16 | 0.153702 | se vo  +1600  +3200
+78 | 0.101464 | se wp  +800  +1600
+17 | 0.085342 | se cr -1600 -800
+68 | 0.081703 | se np  +800  +1600
+16 | 0.078909 | se vo  +1600  +3200
+69 | 0.069533 | se wp -1600 -800
 ...
-57 | -0.362874 | se th  +400  +800
-44 | -0.450443 | se tl  +800  +1600
-31 | -0.458688 | se tl -1600 -800
-45 | -0.486661 | se th -1600 -800
-58 | -0.976640 | se th  +800  +1600
+14 | -0.055618 | se vo  +400  +800
+58 | -0.071541 | se th  +800  +1600
+ 3 | -0.081373 | se vo -800 -400
+15 | -0.095862 | se vo  +800  +1600
+ 2 | -0.135657 | se vo -1600 -800
 
 ```
 
