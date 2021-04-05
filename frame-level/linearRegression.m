@@ -1,7 +1,7 @@
 % linearRegression.m Frame-level linear regression model
 
 %% prepare the data
-useTestSet = false;
+useTestSet = true;
 
 trackListTrain = gettracklist('.\frame-level\train.tl');
 trackListDev = gettracklist('.\frame-level\dev.tl');
@@ -33,6 +33,15 @@ else
     frameUtterancesCompare = frameUtterancesDev;
     trackListCompare = trackListDev;
 end
+%% normalize data
+
+% normalize train data
+[Xtrain, centeringValues, scalingValues] = normalize(Xtrain);
+
+% normalize compare (dev or test) data using the same centering values 
+% and scaling values used to perform the normalization of the train data
+Xcompare = normalize(Xcompare, 'center', centeringValues, 'scale', scalingValues);
+
 %% train regressor
 model = fitlm(Xtrain, yTrain);
 
