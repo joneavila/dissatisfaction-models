@@ -89,7 +89,7 @@ thresholdMin=-0.25, thresholdMax=1.10, thresholdStep=0.05
 ```
 
 The learned coefficients are saved to
-[frame-level/coefficients.txt](frame-level/coefficients.txt). Here is a preview,
+[frame-level/coefficients.txt](frame-level/coefficients.txt). Here is a preview (this preview is outdated, see .txt file instead),
 
 ```NONE
 Coefficients in descending order with format:
