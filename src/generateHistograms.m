@@ -1,14 +1,14 @@
 % generateHistograms.m Save a histogram of each feature in feature spec. 
 % Use the train and dev set.
 
-featureSpec = getfeaturespec('.\mono-simple.fss');
+featureSpec = getfeaturespec('.\mono-extended.fss');
 
 trackListTrain = gettracklist(".\frame-level\train.tl");
 trackListDev = gettracklist(".\frame-level\dev.tl");
 
 % get X (monster regions) and Y (labels)
-[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec);
-[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec);
+% [Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec);
+% [Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec);
 %%
 % 'n' and 'nn' are the negative class (0), 'd' and 'dd' are the positive
 % class (1)
@@ -111,6 +111,6 @@ xlabel('Bin');
 legend('neutral','dissatisfied')
 
 % save image
-imageFilepath = append(imageDir, titleText, ".png");
+imageFilepath = append(imageDir, titleText, "-extended.png");
 saveas(f, imageFilepath);
 fprintf('Saved regressor output histogram to %s\n', imageFilepath);

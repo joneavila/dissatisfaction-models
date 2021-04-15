@@ -3,9 +3,9 @@
 %% prepare the data
 useTestSet = false;
 
-trackListTrain = gettracklist('.\frame-level\train.tl');
-trackListDev = gettracklist('.\frame-level\dev.tl');
-trackListTest = gettracklist('.\frame-level\test.tl');
+trackListTrain = gettracklist('train-frame.tl');
+trackListDev = gettracklist('dev-frame.tl');
+trackListTest = gettracklist('test-frame.tl');
 
 % Note: For results in the SIGDIAL paper, use mono.fss instead.
 featureSpec = getfeaturespec('.\mono-extended.fss');
@@ -20,9 +20,6 @@ useAllAnnotators = false;
 %     getXYfromTrackList(trackListTest, featureSpec, useAllAnnotators);
 %% downsample neutral frames to balance neutral and dissatisfied frames
 
-% drop from these five (5): frameTimesTrain, frameTrackNumsTrain,
-% frameUtterancesTrain, Xtrain, and yTrain
-
 % set seed
 rng(2021);
 
@@ -36,9 +33,8 @@ numNeutral = length(idxNeutral);
 numDissatisfied = length(idxDissatisfied);
 numDifference = numNeutral - numDissatisfied;
 
-selections = randsample(numNeutral, numDifference); % hardcoded (I know that there are more diss than neutral)
-
-
+% warning: hardcoded (I know that there are more diss than neutral)
+selections = randsample(numNeutral, numDifference);
 idxRemove = idxNeutral(selections);
 
 frameTimesTrain(idxRemove) = [];
@@ -233,8 +229,6 @@ for sortDirNum = 1:size(sortDirections, 2)
         end
 
         for frameNumProbe = frameNumCompareStart:frameNumCompareEnd
-            
-           
             
             % check if this frame is in the same track as the original
             if frameTrackNumsCompare(frameNumProbe) ~= frameTrackNumsCompare(frameNumCompare)
