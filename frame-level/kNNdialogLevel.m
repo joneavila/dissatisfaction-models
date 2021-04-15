@@ -1,11 +1,14 @@
 % kNNdialogLevel.m Dialog-level k-nearest neighbor model
 
 featureSpec = getfeaturespec('.\mono.fss');
+
 trackListTrain = gettracklist('.\dialog-level\train.tl');
 trackListDev = gettracklist('.\dialog-level\dev.tl');
-
-[Xtrain, yTrain, trackListTrain] = getXY(trackListTrain, featureSpec);
-[Xdev, yDev, trackListDev] = getXY(trackListDev, featureSpec);
+trackListTest = gettracklist('.\dialog-level\test.tl');
+%%
+% [Xtrain, yTrain, trackListTrain] = getXY(trackListTrain, featureSpec);
+[Xtest, yTest, trackListTest] = getXY(trackListTest, featureSpec);
+% [Xdev, yDev, trackListDev] = getXY(trackListDev, featureSpec);
 %%
 % train the model with X (monster) and Y (labels)
 model = fitcknn(Xtrain, yTrain, 'NumNeighbors', 5);
