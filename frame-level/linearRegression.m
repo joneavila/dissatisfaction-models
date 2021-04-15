@@ -1,13 +1,14 @@
 % linearRegression.m Frame-level linear regression model
 
 %% prepare the data
-useTestSet = true;
+useTestSet = false;
 
 trackListTrain = gettracklist('.\frame-level\train.tl');
 trackListDev = gettracklist('.\frame-level\dev.tl');
 trackListTest = gettracklist('.\frame-level\test.tl');
 
-featureSpec = getfeaturespec('.\mono.fss');
+% Note: For results in the SIGDIAL paper, use mono.fss instead.
+featureSpec = getfeaturespec('.\mono-extended.fss');
 
 useAllAnnotators = false;
 
@@ -17,7 +18,35 @@ useAllAnnotators = false;
 %     getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
 % [Xtest, yTest, frameTrackNumsTest, frameTimesTest, frameUtterancesTest] = ...
 %     getXYfromTrackList(trackListTest, featureSpec, useAllAnnotators);
+%% downsample neutral frames to balance neutral and dissatisfied frames
 
+% drop from these five (5): frameTimesTrain, frameTrackNumsTrain,
+% frameUtterancesTrain, Xtrain, and yTrain
+
+% set seed
+rng(2021);
+
+flagsNeutral = yTrain == 0;
+flagsDissatisfied = yTrain == 1;
+
+idxNeutral = find(flagsNeutral);
+idxDissatisfied = find(flagsDissatisfied);
+
+numNeutral = length(idxNeutral);
+numDissatisfied = length(idxDissatisfied);
+numDifference = numNeutral - numDissatisfied;
+
+selections = randsample(numNeutral, numDifference); % hardcoded (I know that there are more diss than neutral)
+
+
+idxRemove = idxNeutral(selections);
+
+frameTimesTrain(idxRemove) = [];
+frameTrackNumsTrain(idxRemove) = [];
+frameUtterancesTrain(idxRemove) = [];
+Xtrain(idxRemove, :) = [];
+yTrain(idxRemove) = [];
+%%
 if useTestSet
     Xcompare = Xtest;
     yCompare = yTest;
@@ -46,18 +75,18 @@ Xcompare = normalize(Xcompare, 'center', centeringValues, 'scale', scalingValues
 model = fitlm(Xtrain, yTrain);
 
 %% save coefficient info to a text file
-outputFilename = append(pwd, '/frame-level/coefficients.txt');
+outputFilename = append(pwd, '/frame-level/coefficients-extended.txt');
 fileID = fopen(outputFilename, 'w');
 coefficients = model.Coefficients.Estimate;
 coefficients(1) = []; % discard the first coefficient (intercept)
 [coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
 fprintf(fileID, 'Coefficients in descending order with format:\n');
-fprintf(fileID, 'coefficient, value, abbreviation\n');
-for coeffNum = 1:length(coefficients)
-    coeff = coeffSortedIdx(coeffNum);
-    coeffValue = coefficientSorted(coeffNum);
-    fprintf(fileID, '%2d | %f | %s\n', coeff, coeffValue, ...
-        featureSpec(coeff).abbrev);
+fprintf(fileID, 'coefficient number, value, abbreviation\n');
+for i = 1:length(coefficients)
+    coeffNum = coeffSortedIdx(i);
+    coeffValue = coefficientSorted(i);
+    coeffAbbrev = featureSpec(coeffNum).abbrev;
+    fprintf(fileID, '%2d | %f | %s\n', coeffNum, coeffValue, coeffAbbrev);
 end
 fclose(fileID);
 fprintf('Coefficients saved to %s\\%s\n', pwd, outputFilename);
@@ -69,7 +98,7 @@ yPred = predict(model, Xcompare);
 yBaseline = ones([size(Xcompare, 1), 1]);
 %% print f1 score and more for different thresholds
 thresholdMin = -0.25;
-thresholdMax = 1.1;
+thresholdMax = 1.5;
 thresholdStep = 0.05;
 
 fprintf('min(yPred)=%.3f, max(yPred)=%.3f\n', min(yPred), max(yPred));
@@ -110,12 +139,21 @@ for i = 1:nSteps
     scoreLinear(i) = scoLinear;
     scoreBaseline(i) = scoBaseline;
     
-    
     thresholdSel = thresholdSel + thresholdStep;
 end
 disp(table(threshold, precisionLinear, precisionBaseline, recallLinear, ...
     recallBaseline, scoreLinear, scoreBaseline));
 
+%% print stats
+mae = @(A, B) (mean(abs(A - B)));
+fprintf('Regressor MAE = %f\n', mae(yCompare, yPred));
+fprintf('Baseline MAE = %f\n\n', mae(yCompare, yBaseline));
+
+mse = @(actual, pred) (mean((actual - pred) .^ 2));
+fprintf('Regressor MSE = %f\n', model.MSE);
+fprintf('Baseline MSE = %f\n\n', mse(yCompare, yBaseline));
+
+fprintf('Regressor R-squared = %f\n', model.Rsquared.adjusted);
 %% failure analysis
 
 % config
@@ -132,15 +170,13 @@ for sortDirNum = 1:size(sortDirections, 2)
     sortDirection = sortDirections(sortDirNum);    
     [~, sortIndex] = sort(yDifference, sortDirection);
     
-    clipDir = sprintf('%s\\clips-%s', pwd, sortDirection);
+    clipDir = sprintf('%s\\clips-extended-%s', pwd, sortDirection);
     [status, msg, msgID] = mkdir(clipDir);
     
     outputFilename = append(clipDir, '\output.txt');  % need to add rest of path
     fileID = fopen(outputFilename, 'w');
     
     fprintf(fileID, 'sortDirection=%s\n\n', sortDirection);
-    
-    
 
     framesToIgnore = zeros(size(yDifference));
     
@@ -187,8 +223,19 @@ for sortDirNum = 1:size(sortDirections, 2)
         clipSizeFrames = seconds(ignoreSizeSeconds) / milliseconds(10); % monster frames are 10ms
         frameNumCompareStart = frameNumCompare - clipSizeFrames / 2;
         frameNumCompareEnd = frameNumCompare + clipSizeFrames / 2;
+        
+        % adjust compare start and compare end if out of bounds
+        if frameNumCompareStart < 1
+            frameNumCompareStart = 1;
+        end
+        if frameNumCompareEnd > length(yDifference)
+            frameNumCompareEnd = length(yDifference);
+        end
 
         for frameNumProbe = frameNumCompareStart:frameNumCompareEnd
+            
+           
+            
             % check if this frame is in the same track as the original
             if frameTrackNumsCompare(frameNumProbe) ~= frameTrackNumsCompare(frameNumCompare)
                 continue;
@@ -207,7 +254,3 @@ for sortDirNum = 1:size(sortDirections, 2)
     fclose(fileID);
     fprintf('Output written to %s\n', outputFilename);
 end
-%%
-% mae = @(A, B) (mean(abs(A - B)));
-% fprintf('Regressor MAE = %f\n', mae(yCompare, yPred));
-% fprintf('Baseline MAE = %f\n', mae(yCompare, yBaseline));
