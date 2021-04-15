@@ -18,6 +18,10 @@
 
 **Results for 'ja' annotations only. Results are for dev set unless otherwise stated.**
 
+You will need the Signal Processing Toolbox and the other toolbox I forgot the name of but is in the CADQ documentation.
+
+Maybe a note to add the corpus README: the min length is 41s, max length is 543s, and mean is 213s.
+
 We took the corpus and annotated customer utterances. See [annotations](annotations). To predict dissatisfaction
 on a scale from 0 to 1 where 0 is neutral (negative class) and 1 is dissatisfied
 (positive class), `n` and `nn` are read as 0, `d` and `dd` are read as 1, and
