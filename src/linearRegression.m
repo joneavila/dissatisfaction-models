@@ -18,31 +18,31 @@ useAllAnnotators = false;
 %     getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
 % [Xtest, yTest, frameTrackNumsTest, frameTimesTest, frameUtterancesTest] = ...
 %     getXYfromTrackList(trackListTest, featureSpec, useAllAnnotators);
-%% downsample neutral frames to balance neutral and dissatisfied frames
+%% drop neutral frames (or dissatisfied) frames to balance the data set
 
-% set seed
-rng(2021);
+rng(20210419); % set seed for reproducibility
 
-flagsNeutral = yTrain == 0;
-flagsDissatisfied = yTrain == 1;
-
-idxNeutral = find(flagsNeutral);
-idxDissatisfied = find(flagsDissatisfied);
+idxNeutral = find(yTrain == 0);
+idxDissatisfied = find(yTrain == 1);
 
 numNeutral = length(idxNeutral);
 numDissatisfied = length(idxDissatisfied);
-numDifference = numNeutral - numDissatisfied;
 
-% warning: hardcoded (I know that there are more diss than neutral)
-selections = randsample(numNeutral, numDifference);
-idxRemove = idxNeutral(selections);
+if numNeutral > numDissatisfied
+    selections = randsample(numNeutral, numNeutral - numDissatisfied);
+    idxRemove = idxNeutral(selections);
+elseif numDissatisfied > numNeutral
+    selections = randsample(numDissatisfied, numDissatisfied - numNeutral);
+    idxRemove = idxDissatisfied(selections);
+end
 
 frameTimesTrain(idxRemove) = [];
 frameTrackNumsTrain(idxRemove) = [];
 frameUtterancesTrain(idxRemove) = [];
 Xtrain(idxRemove, :) = [];
 yTrain(idxRemove) = [];
-%%
+%% Copy dev or test set as 'compare' set
+% So that the rest of the code can be used for either set
 if useTestSet
     Xcompare = Xtest;
     yCompare = yTest;
@@ -64,14 +64,14 @@ end
 [Xtrain, centeringValues, scalingValues] = normalize(Xtrain);
 
 % normalize compare (dev or test) data using the same centering values 
-% and scaling values used to perform the normalization of the train data
+% and scaling values used to normalize the train data
 Xcompare = normalize(Xcompare, 'center', centeringValues, 'scale', scalingValues);
 
 %% train regressor
 model = fitlm(Xtrain, yTrain);
 
 %% save coefficient info to a text file
-outputFilename = append(pwd, '/frame-level/coefficients-extended.txt');
+outputFilename = append(pwd, '/coefficients-without-time.txt');
 fileID = fopen(outputFilename, 'w');
 coefficients = model.Coefficients.Estimate;
 coefficients(1) = []; % discard the first coefficient (intercept)
@@ -81,7 +81,14 @@ fprintf(fileID, 'coefficient number, value, abbreviation\n');
 for i = 1:length(coefficients)
     coeffNum = coeffSortedIdx(i);
     coeffValue = coefficientSorted(i);
-    coeffAbbrev = featureSpec(coeffNum).abbrev;
+    try
+        coeffAbbrev = featureSpec(coeffNum).abbrev;
+    catch
+        % this warning is only shown when X contains the time feature
+        % it is a temporary solution
+        warning('Coefficient number not in featureSpec, out of bounds')
+        coeffAbbrev = 'out-of-bounds';
+    end
     fprintf(fileID, '%2d | %f | %s\n', coeffNum, coeffValue, coeffAbbrev);
 end
 fclose(fileID);
@@ -166,7 +173,7 @@ for sortDirNum = 1:size(sortDirections, 2)
     sortDirection = sortDirections(sortDirNum);    
     [~, sortIndex] = sort(yDifference, sortDirection);
     
-    clipDir = sprintf('%s\\clips-extended-%s', pwd, sortDirection);
+    clipDir = sprintf('%s\\clips-extended-time-%s', pwd, sortDirection);
     [status, msg, msgID] = mkdir(clipDir);
     
     outputFilename = append(clipDir, '\output.txt');  % need to add rest of path
