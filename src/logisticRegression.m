@@ -1,27 +1,46 @@
-% logisticRegression.m logisticRegression model
-
-featureSpec = getfeaturespec('.\mono.fss');
-
-trackListTrain = gettracklist(".\frame-level\train.tl");
-trackListDev = gettracklist(".\frame-level\dev.tl");
-%%
-useAllAnnotators = false;
-[Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec, useAllAnnotators);
-[Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
+% logisticRegression.m Frame-level linear regression model
+%% prepare the data
+prepareData;
 
 %% train regressor
 
-% add 1 so that the 0 and 1 annotations all become positive and it works with the mnrfit function
-coeffEstimates = mnrfit(Xtrain, yTrain+1);
+% add 1 to yTrain so that the 0 and 1 labels become positive and it works 
+% with the mnrfit function
+yTrain = yTrain + 1;
 
-% mnrval returns the predicted probabilities (0..1) for each class
+coeffEstimates = mnrfit(Xtrain, yTrain);
+
+% pihat is the predicted probabilities (0..1) for each class
 pihat = mnrval(coeffEstimates, Xdev);
-yPred = pihat(:, 2); % so just get the probabilities for dissatisfied class
 
-mae = @(A, B) (mean(abs(A - B)));
+%% baseline
+% the baseline always predicts dissatisfied (positive class)
+yBaseline = ones([size(Xcompare, 1), 1]);
+%% print f1 score and more for different thresholds
+thresholdMin = 0;
+thresholdMax = 1;
+thresholdStep = 0.05;
 
-% the baseline predicts the majority class (the data is not balanced)
-yBaseline = ones([size(Xdev, 1), 1]) * mode(yTrain);
+yPred = pihat(:, 2); % probabilities of the dissatisfaction class (0..1)
 
-fprintf('Regressor MAE = %f\n', mae(yDev, yPred));
-fprintf('Baseline MAE = %f\n', mae(yDev, yBaseline));
+fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', ...
+    thresholdMin, thresholdMax, thresholdStep);
+
+thresholdCompare = 0.5;
+yCompareLabel = arrayfun(@(x) floatToLabel(x, thresholdCompare), yCompare, ...
+    'UniformOutput', false);
+
+for threshold = thresholdMin:thresholdStep:thresholdMax
+    yPredLabel = arrayfun(@(x) floatToLabel(x, threshold), yPred, ...
+        'UniformOutput', false);
+    yBaselineLabel = arrayfun(@(x) floatToLabel(x, threshold), ...
+        yBaseline, 'UniformOutput', false);
+    [scoRegressor, precRegressor, recRegressor] = fScore(yCompareLabel, ...
+        yPredLabel, 'doomed', 'successful');
+    [scoBaseline, precBaseline, recBaseline] = fScore(yCompareLabel, ...
+        yBaselineLabel, 'doomed', 'successful');
+    fprintf('threshold=%.2f\n', threshold);
+    fprintf('\tprecision regressor=%.2f baseline=%.2f\n', precRegressor, precBaseline);
+    fprintf('\trecall regressor=%.2f baseline=%.2f\n', recRegressor, recBaseline);
+    fprintf('\tfscore regressor=%.2f baseline=%.2f\n', scoRegressor, scoBaseline);
+end
