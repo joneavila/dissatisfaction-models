@@ -89,7 +89,7 @@ fprintf('Regressor MAE = %f\n', mae(yCompare, yPred));
 fprintf('Baseline MAE = %f\n\n', mae(yCompare, yBaseline));
 
 mse = @(actual, pred) (mean((actual - pred) .^ 2));
-fprintf('Regressor MSE = %f\n', model.MSE);
+fprintf('Linear regressor MSE = %f\n', mse(yCompare, yPred));
 fprintf('Baseline MSE = %f\n\n', mse(yCompare, yBaseline));
 
 fprintf('Regressor R-squared = %f\n', model.Rsquared.adjusted);
