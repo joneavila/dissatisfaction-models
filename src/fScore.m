@@ -1,4 +1,4 @@
-function [score, precision, recall] = fScore(yActual, yPred, classPositive, classNegative)
+function [score, precision, recall] = fScore(yActual, yPred, classPositive, classNegative, beta)
 % FSCORE Assumes yActual and yPred are same size.
 
     tp = 0;
@@ -35,7 +35,6 @@ function [score, precision, recall] = fScore(yActual, yPred, classPositive, clas
     % calculate f score
     precision = tp / (tp + fp);
     recall = tp / (tp + fn);
-    beta = 1; % f1 if b=1
     if precision == 0 || recall == 0
         score = 0;
     else
