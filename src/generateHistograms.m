@@ -1,14 +1,8 @@
 % generateHistograms.m Save a histogram of each feature in feature spec. 
 % Use the train and dev set.
+%% prepare the data
+prepareData;
 
-featureSpec = getfeaturespec('.\mono-extended.fss');
-
-trackListTrain = gettracklist(".\frame-level\train.tl");
-trackListDev = gettracklist(".\frame-level\dev.tl");
-
-% get X (monster regions) and Y (labels)
-% [Xtrain, yTrain] = getXYfromTrackList(trackListTrain, featureSpec);
-% [Xdev, yDev] = getXYfromTrackList(trackListDev, featureSpec);
 %%
 % 'n' and 'nn' are the negative class (0), 'd' and 'dd' are the positive
 % class (1)
@@ -21,7 +15,7 @@ devDissatisfied = Xdev(yDev==1, :);
 % t-test will compare neutral and dissatisfied
 N = [trainNeutral; devNeutral];
 D = [trainDissatisfied; devDissatisfied];
-%%
+
 % config
 imageDir = append(pwd, "\frame-level\histograms\");
 nBins = 32;
@@ -78,39 +72,75 @@ end
 disp("Saved all feature histograms");
 
 %% save a histogram for the linear regressor's predictions on N and D
+
+% linear 
 regressor = fitlm(Xtrain, yTrain);
 predN = predict(regressor, devNeutral);
 predD = predict(regressor, devDissatisfied);
+genHistogramForModel(predN, predD, 'linear regression dev');
 
-f = figure('Visible', 'off');
-    
-% histogram for predictions on N
-hPredN = histogram(predN, nBins);
-hPredN.FaceColor = barColorN;
+% logistic
+coeffEstimates = mnrfit(Xtrain, yTrain+1);
+pihat = mnrval(coeffEstimates, devNeutral);
+predN = pihat(:, 2);
+pihat = mnrval(coeffEstimates, devDissatisfied);
+predD = pihat(:, 2);
+genHistogramForModel(predN, predD, 'logistic regression dev');
 
-hold on
 
-% histogram for predictions on D
-hPredD = histogram(predD, nBins);
-hPredD.FaceColor = barColorD;
 
-% normalize the histograms so that all bar heights add to 1
-hPredN.Normalization = 'probability';
-hPredD.Normalization = 'probability';
+% linear 
+regressor = fitlm(Xtrain, yTrain);
+predN = predict(regressor, trainNeutral);
+predD = predict(regressor, trainDissatisfied);
+genHistogramForModel(predN, predD, 'linear regression train');
 
-% adjust bars so that both plots align
-hPredN.BinWidth = hPredD.BinWidth;
-hPredN.BinEdges = hPredD.BinEdges;
+% logistic
+coeffEstimates = mnrfit(Xtrain, yTrain+1);
+pihat = mnrval(coeffEstimates, trainNeutral);
+predN = pihat(:, 2);
+pihat = mnrval(coeffEstimates, trainDissatisfied);
+predD = pihat(:, 2);
+genHistogramForModel(predN, predD, 'logistic regression train');
 
-% add titles, axes labels, and legend
-titleText = 'Linear regressor output';
-subtitleText = sprintf('Predictions on dev set, nBins=%d', nBins);
-title(titleText, subtitleText);
-ylabel('Number in bin');
-xlabel('Bin');
-legend('neutral','dissatisfied')
 
-% save image
-imageFilepath = append(imageDir, titleText, "-extended.png");
-saveas(f, imageFilepath);
-fprintf('Saved regressor output histogram to %s\n', imageFilepath);
+function genHistogramForModel(predN, predD, modelName)
+
+    nBins = 32; % TODO use the global variables
+    barColorN = '#1e88e5'; 
+    barColorD = '#fb8c00';
+    imageDir = append(pwd, "\src\histograms\");
+
+    f = figure('Visible', 'off');
+
+    % histogram for predictions on N
+    hPredN = histogram(predN, nBins);
+    hPredN.FaceColor = barColorN;
+
+    hold on
+
+    % histogram for predictions on D
+    hPredD = histogram(predD, nBins);
+    hPredD.FaceColor = barColorD;
+
+    % normalize the histograms so that all bar heights add to 1
+    hPredN.Normalization = 'probability';
+    hPredD.Normalization = 'probability';
+
+    % adjust bars so that both plots align
+    hPredN.BinWidth = hPredD.BinWidth;
+    hPredN.BinEdges = hPredD.BinEdges;
+
+    % add titles, axes labels, and legend
+    titleText = modelName;
+    subtitleText = sprintf('Predictions on dev set, nBins=%d', nBins);
+    title(titleText, subtitleText);
+    ylabel('Number in bin');
+    xlabel('Bin');
+    legend('neutral','dissatisfied')
+
+    % save image
+    imageFilepath = append(imageDir, titleText, "-new.png");
+    saveas(f, imageFilepath);
+    fprintf('Saved regressor output histogram to %s\n', imageFilepath);
+end
