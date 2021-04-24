@@ -5,9 +5,10 @@ prepareData;
 
 %% train regressor
 model = fitlm(Xtrain, yTrain);
+save('linearRegressor.mat', 'model');
 
 %% save coefficient info to a text file
-outputFilename = append(pwd, '/coefficients-without-time.txt');
+outputFilename = append(pwd, '/src/coefficients-extended.txt');
 fileID = fopen(outputFilename, 'w');
 coefficients = model.Coefficients.Estimate;
 coefficients(1) = []; % discard the first coefficient (intercept)
