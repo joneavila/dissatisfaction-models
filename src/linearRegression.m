@@ -37,52 +37,48 @@ yPred = predict(model, Xcompare);
 % the baseline always predicts dissatisfied (positive class)
 yBaseline = ones([size(Xcompare, 1), 1]);
 %% print f1 score and more for different thresholds
-thresholdMin = -0.25;
-thresholdMax = 1.5;
-thresholdStep = 0.05;
+thresholdMin = min(yPred);
+thresholdMax = max(yPred);
+thresholdNum = 1000;
+thresholdStep = (thresholdMax - thresholdMin) / thresholdNum;
 
-fprintf('min(yPred)=%.3f, max(yPred)=%.3f\n', min(yPred), max(yPred));
-fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', ...
-    thresholdMin, thresholdMax, thresholdStep);
+% fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', ...
+%     thresholdMin, thresholdMax, thresholdStep);
+
+beta = 0.25;
 
 thresholdCompare = 0.5;
 yCompareLabel = arrayfun(@(x) floatToLabel(x, thresholdCompare), yCompare, ...
     'UniformOutput', false);
 
-nSteps = (thresholdMax - thresholdMin) / thresholdStep;
-threshold = zeros([nSteps 1]);
-precisionLinear = zeros([nSteps 1]);
-precisionBaseline = zeros([nSteps 1]);
-recallLinear = zeros([nSteps 1]);
-recallBaseline = zeros([nSteps 1]);
-scoreLinear = zeros([nSteps 1]);
-scoreBaseline = zeros([nSteps 1]);
+bestLinearFscore = 0;
+baselineFscoreAtBestThreshold = 0;
+bestThreshold = 0;
 
-thresholdSel = thresholdMin;
-for i = 1:nSteps
-    thresholdSel = round(thresholdSel, 2);
-    yPredLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), yPred, ...
+for threshold = thresholdMin:thresholdStep:thresholdMax
+
+    yPredLabel = arrayfun(@(x) floatToLabel(x, threshold), yPred, ...
         'UniformOutput', false);
-    yBaselineLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), ...
+    yBaselineLabel = arrayfun(@(x) floatToLabel(x, threshold), ...
         yBaseline, 'UniformOutput', false);
     [scoLinear, precLinear, recLinear] = fScore(yCompareLabel, ...
-        yPredLabel, 'doomed', 'successful');
+        yPredLabel, 'doomed', 'successful', beta);
     [scoBaseline, precBaseline, recBaseline] = fScore(yCompareLabel, ...
-        yBaselineLabel, 'doomed', 'successful');
-    threshold(i) = thresholdSel;
-    precisionLinear(i) = precLinear;
-    precisionBaseline(i) = precBaseline;
+        yBaselineLabel, 'doomed', 'successful', beta);
     
-    recallLinear(i) = recLinear;
-    recallBaseline(i) = recBaseline;
+    if scoLinear >= bestLinearFscore
+        bestLinearFscore = scoLinear;
+        bestThreshold = threshold;
+        baselineFscoreAtBestThreshold = scoBaseline;
+    end
+ 
+    % fprintf('scoLinear=%.2f scoBaseline=%.2f precLinear=%.2f precBaseline=%.2f recLinear=%2.f recBaseline=%.2f\n', ...
+    %     scoLinear, scoBaseline, precLinear, precBaseline, recLinear, recBaseline);
     
-    scoreLinear(i) = scoLinear;
-    scoreBaseline(i) = scoBaseline;
-    
-    thresholdSel = thresholdSel + thresholdStep;
 end
-disp(table(threshold, precisionLinear, precisionBaseline, recallLinear, ...
-    recallBaseline, scoreLinear, scoreBaseline));
+
+fprintf('beta=%.2f, bestThreshold=%.3f, bestLinearFscore=%.2f, baselineFscoreAtBestThreshold=%.2f\n', ...
+    beta, bestThreshold, bestLinearFscore, baselineFscoreAtBestThreshold);
 
 %% print stats
 mae = @(A, B) (mean(abs(A - B)));
