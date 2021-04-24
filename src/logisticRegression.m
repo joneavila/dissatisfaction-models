@@ -4,14 +4,14 @@ prepareData;
 
 %% train regressor
 
-% add 1 to yTrain so that the 0 and 1 labels become positive and it works 
-% with the mnrfit function
-yTrain = yTrain + 1;
+% add 1 to yTrain so that the 0 and 1 labels become positive (categorical)
+coeffEstimates = mnrfit(Xtrain, yTrain + 1);
 
-coeffEstimates = mnrfit(Xtrain, yTrain);
+%% predict on the dev set
 
 % pihat is the predicted probabilities (0..1) for each class
 pihat = mnrval(coeffEstimates, Xdev);
+yPred = pihat(:, 2); % probabilities of the dissatisfaction class (0..1)
 
 %% baseline
 % the baseline always predicts dissatisfied (positive class)
@@ -20,8 +20,6 @@ yBaseline = ones([size(Xcompare, 1), 1]);
 thresholdMin = 0;
 thresholdMax = 1;
 thresholdStep = 0.05;
-
-yPred = pihat(:, 2); % probabilities of the dissatisfaction class (0..1)
 
 fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', ...
     thresholdMin, thresholdMax, thresholdStep);
@@ -44,3 +42,8 @@ for threshold = thresholdMin:thresholdStep:thresholdMax
     fprintf('\trecall regressor=%.2f baseline=%.2f\n', recRegressor, recBaseline);
     fprintf('\tfscore regressor=%.2f baseline=%.2f\n', scoRegressor, scoBaseline);
 end
+%% print stats
+
+mse = @(actual, pred) (mean((actual - pred) .^ 2));
+% fprintf('Logistic regressor MSE = %f\n\n', mse(yCompare, yPred));
+fprintf('Logistic regressor MSE = %f\n\n', mse(yTrain, yPred));
