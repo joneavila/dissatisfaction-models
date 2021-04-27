@@ -5,14 +5,13 @@
 model = load('linearRegressor.mat');
 model = model.model;
 
-%% predict
 trackListTrain = gettracklist('train-dialog.tl');
 trackListDev = gettracklist('dev-dialog.tl');
 trackListTest = gettracklist('test-dialog.tl');
 
 featureSpec = getfeaturespec('.\mono-extended.fss');
 
-%% predict on the training set to find the best threshold
+%% predict on the training set
 nTracks = size(trackListDev, 2);
 yPred = zeros(size(trackListDev));
 yActual = zeros(size(trackListDev));
@@ -85,5 +84,4 @@ for threshold = thresholdMin:thresholdStep:thresholdMax
     
 end
 
-% disp(yPredAdjusted);
-fprintf('Linear regression dialog-level (best) threshold=%.2f, MSE=%.2f\n', bestThreshold, bestMse);
+fprintf('bestThreshold=%.2f, MSE=%.2f\n', bestThreshold, bestMse);
