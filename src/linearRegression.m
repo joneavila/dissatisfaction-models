@@ -37,13 +37,15 @@ yPred = predict(model, Xcompare);
 % the baseline always predicts dissatisfied (positive class)
 yBaseline = ones([size(Xcompare, 1), 1]);
 %% print f1 score and more for different thresholds
+
+% Output as of April 27, 2021
+% beta=0.25, bestThreshold=0.555, bestLinearFscore=0.31, ...
+% baselineFscoreAtBestThreshold=0.27
+
 thresholdMin = min(yPred);
 thresholdMax = max(yPred);
-thresholdNum = 1000;
+thresholdNum = 500;
 thresholdStep = (thresholdMax - thresholdMin) / thresholdNum;
-
-% fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', ...
-%     thresholdMin, thresholdMax, thresholdStep);
 
 beta = 0.25;
 
@@ -59,16 +61,18 @@ for threshold = thresholdMin:thresholdStep:thresholdMax
 
     yPredLabel = arrayfun(@(x) floatToLabel(x, threshold), yPred, ...
         'UniformOutput', false);
-    yBaselineLabel = arrayfun(@(x) floatToLabel(x, threshold), ...
-        yBaseline, 'UniformOutput', false);
     [scoLinear, precLinear, recLinear] = fScore(yCompareLabel, ...
         yPredLabel, 'doomed', 'successful', beta);
-    [scoBaseline, precBaseline, recBaseline] = fScore(yCompareLabel, ...
-        yBaselineLabel, 'doomed', 'successful', beta);
-    
+
     if scoLinear >= bestLinearFscore
         bestLinearFscore = scoLinear;
         bestThreshold = threshold;
+        
+        yBaselineLabel = arrayfun(@(x) floatToLabel(x, threshold), ...
+        yBaseline, 'UniformOutput', false);
+        [scoBaseline, precBaseline, recBaseline] = fScore(yCompareLabel, ...
+        yBaselineLabel, 'doomed', 'successful', beta);
+        
         baselineFscoreAtBestThreshold = scoBaseline;
     end
  
@@ -81,6 +85,14 @@ fprintf('beta=%.2f, bestThreshold=%.3f, bestLinearFscore=%.2f, baselineFscoreAtB
     beta, bestThreshold, bestLinearFscore, baselineFscoreAtBestThreshold);
 
 %% print stats
+
+% Output as of April 27, 2021
+% Regressor MAE = 0.433054
+% Baseline MAE = 0.743079
+% Linear regressor MSE = 0.250489
+% Baseline MSE = 0.743079
+% Regressor R-squared = 0.347917
+
 mae = @(A, B) (mean(abs(A - B)));
 fprintf('Regressor MAE = %f\n', mae(yCompare, yPred));
 fprintf('Baseline MAE = %f\n\n', mae(yCompare, yBaseline));
