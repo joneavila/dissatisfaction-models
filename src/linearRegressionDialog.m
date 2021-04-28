@@ -21,6 +21,9 @@ opts = spreadsheetImportOptions('NumVariables', 2, 'DataRange', ...
     'H2:I203', 'VariableNamesRange', 'H1:I1');
 callTable = readtable('call-log.xlsx', opts);
 
+predN = []; % for storing predictions on neutral dialogs
+predD = []; % for storing predictions on dissatisifed dialogs
+
 for trackNum = 1:nTracks
     
     track = trackListDev{trackNum};
@@ -43,23 +46,29 @@ for trackNum = 1:nTracks
     
     % get the known Y for that dialog
     matchingIdx = strcmp(callTable.filename, track.filename);
-    label = callTable(matchingIdx, :).label{1};
-    if strcmp(label, 'successful')
-        yActual(trackNum) = 0;
-    elseif strcmp(label, 'doomed_1') || strcmp(label, 'doomed_2')
-        yActual(trackNum) = 1;
-    else
-        error('unknown label in call table')
-    end
+    actualLabel = callTable(matchingIdx, :).label{1};
+    actualFloat = labelToFloat(actualLabel);
+    
+    yActual(trackNum) = actualFloat;
     
     % predict on X using the linear regressor
-    a = monster.monster;
-    dialogPred = predict(model, a);
-    
     % take the average of the predictions and make it the final one
-    yPred(trackNum) = mean(dialogPred, 'omitnan');
+    dialogPred = mean(predict(model, monster.monster), 'omitnan');
+    yPred(trackNum) = dialogPred;
+    
+    if actualFloat == 0
+        predN = [predN dialogPred];
+    elseif actualFloat == 1
+        predD = [predD dialogPred];
+    else
+        error('unknown float: %f\n', actualFloat);
+    end
     
 end
+
+%% generate histogram for predictions on neutral vs dissatisfied dialogs
+modelName = 'dialog-level (linear regression) dev';
+genHistogramForModel(predN, predD, modelName)
 
 %% try different thresholds
 thresholdMin = min(yPred);
