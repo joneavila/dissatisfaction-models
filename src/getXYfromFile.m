@@ -61,10 +61,6 @@ function [X, y, frameTimes, frameUtterances] = getXYfromFile(filename, ...
 
 end
 
-function time = frameNumToTime(frameNum)
-    time = milliseconds(10) * frameNum;
-end
-
 function utteranceNum = frameToUtterance(frameNum, annTable)
     numRows = size(annTable, 1);
     utteranceNum = -1;
