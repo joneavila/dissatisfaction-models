@@ -27,7 +27,7 @@ predD = []; % for storing predictions on dissatisifed dialogs
 for trackNum = 1:nTracks
     
     track = trackListDev{trackNum};
-    fprintf('[%d/%d] Predicting on %s\n', trackNum, nTracks, track.filename);
+    fprintf('[%d/%d] %s\n', trackNum, nTracks, track.filename);
     
     % get the X for that dialog
     % try to load the pre-computed monster, else compute it and save it
@@ -53,16 +53,28 @@ for trackNum = 1:nTracks
     
     % predict on X using the linear regressor
     % take the average of the predictions and make it the final one
-    dialogPred = mean(predict(model, monster.monster), 'omitnan');
-    yPred(trackNum) = dialogPred;
+    dialogPred = predict(model, monster.monster);
+    dialogPredMean = mean(dialogPred, 'omitnan');
+    yPred(trackNum) = dialogPredMean;
     
+    % add the predictions to predN or predD to print a histogram later
     if actualFloat == 0
-        predN = [predN dialogPred];
+        predN = [predN dialogPredMean];
     elseif actualFloat == 1
-        predD = [predD dialogPred];
+        predD = [predD dialogPredMean];
     else
         error('unknown float: %f\n', actualFloat);
     end
+    
+    [predMin, indMin] = min(dialogPred);
+    [predMax, indMax] = max(dialogPred);
+    predTimeSecondsMin = frameNumToTime(indMin);
+    predTimeSecondsMax = frameNumToTime(indMax);
+    fprintf('\tpredMean=%.2f\n', dialogPredMean);
+    fprintf('\tpredMin=%.2f, predTimeMin="%s"\n', ...
+        predMin, datestr(predTimeSecondsMin, 'MM:SS'));
+    fprintf('\tpredMax=%.2f, predTimeMax="%s"\n', ...
+        predMax, datestr(predTimeSecondsMax, 'MM:SS'));
     
 end
 
@@ -71,26 +83,53 @@ modelName = 'dialog-level (linear regression) dev';
 genHistogramForModel(predN, predD, modelName)
 
 %% try different thresholds
+
+% the baseline predicts the average of the train set
+% since the data is balanced, should be exactly 0.5
+yBaseline = ones(size(yActual));
+
 thresholdMin = min(yPred);
 thresholdMax = max(yPred);
-thresholdNum = 1000;
+thresholdNum = 100;
 thresholdStep = (thresholdMax - thresholdMin) / thresholdNum;
-
-mse = @(actual, pred) (mean((actual - pred) .^ 2));
+beta = 0.25;
 
 bestMse = realmax;
 bestThreshold = 0;
 
+fprintf('beta=%.2f min(yPred)=%.2f max(yPred)=%2.f mean(yPred)=%.2f\n', ...
+    beta, min(yPred), max(yPred), mean(yPred));
+
+mse = @(actual, pred) (mean((actual - pred) .^ 2));
+
 for threshold = thresholdMin:thresholdStep:thresholdMax
     
-    yPredAdjusted = yPred >= threshold;
-    thresholdMse = mse(yPredAdjusted, yActual);
+    yPredAfterThreshold = yPred >= threshold;
+    thresholdMse = mse(yPredAfterThreshold, yActual);
     
-    if thresholdMse <= bestMse
+    if thresholdMse < bestMse
         bestMse = thresholdMse;
         bestThreshold = threshold;
     end
+   
+    [fscoreModel, precModel, recallModel] = fScore(yActual, ...
+        yPredAfterThreshold, 1, 0, beta);
     
+    fprintf('\tthreshold=%.2f fscore=%.2f prec=%.2f recall=%2.f mse=%.2f\n', ...
+        threshold, fscoreModel, precModel, recallModel, thresholdMse);
 end
 
-fprintf('bestThreshold=%.2f, MSE=%.2f\n', bestThreshold, bestMse);
+fprintf('\nbest MSE=%.2f at threshold=%.2f\n', bestMse, bestThreshold);
+
+fprintf('regressor at best threshold\n');
+yPredAfterThreshold = yPred >= bestThreshold;
+[fscoreModel, precModel, recallModel] = fScore(yActual, ...
+    yPredAfterThreshold, 1, 0, beta);
+fprintf('\tfscore=%.2f prec=%.2f recall=%2.f \n', ...
+    fscoreModel, precModel, recallModel);
+
+fprintf('baseline (always predict 1)\n');
+[fscoreBaseline, precBaseline, recallBaseline] = fScore(yActual, ...
+    yBaseline, 1, 0, beta);
+fprintf('\tfscore=%.2f prec=%.2f recall=%2.f \n', ...
+    fscoreBaseline, precBaseline, recallBaseline);
