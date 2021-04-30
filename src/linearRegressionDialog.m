@@ -16,6 +16,9 @@ nTracks = size(trackListDev, 2);
 yPred = zeros(size(trackListDev));
 yActual = zeros(size(trackListDev));
 
+plotDirectory = append(pwd, "\src\time-pred-plots\");
+mkdir(plotDirectory);
+
 % from call-log.xlsx, load the 'filename' and 'label' columns
 opts = spreadsheetImportOptions('NumVariables', 2, 'DataRange', ...
     'H2:I203', 'VariableNamesRange', 'H1:I1');
@@ -66,6 +69,7 @@ for trackNum = 1:nTracks
         error('unknown float: %f\n', actualFloat);
     end
     
+    % print min, max predictions and corresponding times
     [predMin, indMin] = min(dialogPred);
     [predMax, indMax] = max(dialogPred);
     predTimeSecondsMin = frameNumToTime(indMin);
@@ -76,10 +80,22 @@ for trackNum = 1:nTracks
     fprintf('\tpredMax=%.2f, predTimeMax="%s"\n', ...
         predMax, datestr(predTimeSecondsMax, 'MM:SS'));
     
+    % plot predictions over time
+    % dialogPred
+    % add the total time to the title
+    x = (1:length(dialogPred)) * milliseconds(10);
+    y = dialogPred;
+    plot(x, y);
+    title(sprintf('%s\n', filename));
+    xlabel('time (seconds)');
+    ylabel('dissatisfaction');
+    ax = gca;
+    exportgraphics(ax, sprintf('%s/%s.jpg', plotDirectory, name));
+    
 end
 
 %% generate histogram for predictions on neutral vs dissatisfied dialogs
-modelName = 'dialog-level (linear regression) dev';
+modelName = 'dialog-level (linear regression) dev (tweak)';
 genHistogramForModel(predN, predD, modelName)
 
 %% try different thresholds
