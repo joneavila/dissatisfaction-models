@@ -8,8 +8,9 @@ function [score, precision, recall] = fScore(yActual, yPred, classPositive, clas
     
     for i = 1:length(yActual)
         
-        predicted = yPred{i};
-        actual = yActual{i};
+        % TODO handle cases when yPred and yActual are char/string
+        predicted = yPred(i);
+        actual = yActual(i);
         
         if isequal(predicted, classPositive)
             if isequal(actual, classPositive)
