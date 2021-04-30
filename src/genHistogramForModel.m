@@ -25,8 +25,8 @@ function genHistogramForModel(predN, predD, modelName)
     hPredD.Normalization = 'probability';
 
     % adjust bars so that both plots align
-    hPredN.BinWidth = hPredD.BinWidth;
-    hPredN.BinEdges = hPredD.BinEdges;
+    % hPredN.BinWidth = hPredD.BinWidth;
+    % hPredN.BinEdges = hPredD.BinEdges;
 
     % add titles, axes labels, and legend
     titleText = modelName;
