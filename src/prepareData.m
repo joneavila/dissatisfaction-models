@@ -48,20 +48,20 @@ idxDissatisfied = find(yTrain == 1);
 
 numNeutral = length(idxNeutral);
 numDissatisfied = length(idxDissatisfied);
+numDifference = abs(numNeutral - numDissatisfied);
 
-if numNeutral > numDissatisfied
-    selections = randsample(numNeutral, numNeutral - numDissatisfied);
-    idxToDrop = idxNeutral(selections);
-elseif numDissatisfied > numNeutral
-    selections = randsample(numDissatisfied, numDissatisfied - numNeutral);
-    idxToDrop = idxDissatisfied(selections);
+if numDifference
+    if numNeutral > numDissatisfied
+        idxToDrop = randsample(idxNeutral, numDifference);
+    elseif numDissatisfied > numNeutral
+        idxToDrop = randsample(numDissatisfied, numDifference);
+    end
+    frameTimesTrain(idxToDrop) = [];
+    frameTrackNumsTrain(idxToDrop) = [];
+    frameUtterNumsTrain(idxToDrop) = [];
+    Xtrain(idxToDrop, :) = [];
+    yTrain(idxToDrop) = [];
 end
-
-frameTimesTrain(idxToDrop) = [];
-frameTrackNumsTrain(idxToDrop) = [];
-frameUtterNumsTrain(idxToDrop) = [];
-Xtrain(idxToDrop, :) = [];
-yTrain(idxToDrop) = [];
 %% normalize data
 
 % normalize train data
