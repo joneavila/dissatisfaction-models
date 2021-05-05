@@ -1,23 +1,47 @@
-%% prepare the data
-useTestSet = false;
+% prepareData.m
 
+%% config
+useTestSet = false;
+useAllAnnotators = false;
+
+%% load precomputed data if found, else compute it
 trackListTrain = gettracklist('train-frame.tl');
 trackListDev = gettracklist('dev-frame.tl');
 trackListTest = gettracklist('test-frame.tl');
 
 featureSpec = getfeaturespec('.\mono-extended.fss');
 
-useAllAnnotators = false;
+% load the train data if found, else compute it
+if ~exist('Xtrain', 'var') || ~exist('yTrain', 'var') || ...
+        ~exist('frameTrackNumsTrain', 'var') || ...
+        ~exist('frameTimesTrain', 'var') || ...
+        ~exist('frameUtterNumsTrain', 'var')
+    [Xtrain, yTrain, frameTrackNumsTrain, frameTimesTrain, ...
+        frameUtterNumsTrain] = getXYfromTrackList(trackListTrain, ...
+        featureSpec, useAllAnnotators);
+end
 
-% [Xtrain, yTrain, frameTrackNumsTrain, frameTimesTrain, frameUtterancesTrain] = ...
-%     getXYfromTrackList(trackListTrain, featureSpec, useAllAnnotators);
-% [Xdev, yDev, frameTrackNumsDev, frameTimesDev, frameUtterancesDev] = ...
-%     getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
-% [Xtest, yTest, frameTrackNumsTest, frameTimesTest, frameUtterancesTest] = ...
-%     getXYfromTrackList(trackListTest, featureSpec, useAllAnnotators);
-%% drop neutral frames (or dissatisfied) frames to balance the data set
+% load the compare data (dev or test data, depending on the value of 
+% useTestSet), else compute it
+if ~exist('Xcompare', 'var') || ~exist('yCompare', 'var') || ...
+        ~exist('frameTrackNumsCompare', 'var') || ...
+        ~exist('frameTimesCompare', 'var') || ...
+        ~exist('frameUtterNumsCompare', 'var')
+    if useTestSet
+        [Xcompare, yCompare, frameTrackNumsCompare, frameTimesCompare, ...
+            frameUtterNumsCompare] = getXYfromTrackList(trackListTest, ...
+            featureSpec, useAllAnnotators);
+    else
+        [Xcompare, yCompare, frameTrackNumsCompare, frameTimesCompare, ...
+            frameUtterNumsCompare] = getXYfromTrackList(trackListDev, ...
+            featureSpec, useAllAnnotators);
+    end
+end
 
-rng(20210419); % set seed for reproducibility
+%% drop neutral (or dissatisfied) frames in the train data to balance it
+
+% set seed for reproducibility
+rng(20210419);
 
 idxNeutral = find(yTrain == 0);
 idxDissatisfied = find(yTrain == 1);
@@ -27,39 +51,30 @@ numDissatisfied = length(idxDissatisfied);
 
 if numNeutral > numDissatisfied
     selections = randsample(numNeutral, numNeutral - numDissatisfied);
-    idxRemove = idxNeutral(selections);
+    idxToDrop = idxNeutral(selections);
 elseif numDissatisfied > numNeutral
     selections = randsample(numDissatisfied, numDissatisfied - numNeutral);
-    idxRemove = idxDissatisfied(selections);
+    idxToDrop = idxDissatisfied(selections);
 end
 
-frameTimesTrain(idxRemove) = [];
-frameTrackNumsTrain(idxRemove) = [];
-frameUtterancesTrain(idxRemove) = [];
-Xtrain(idxRemove, :) = [];
-yTrain(idxRemove) = [];
-%% Copy dev or test set as 'compare' set
-% So that the rest of the code can be used for either set
-if useTestSet
-    Xcompare = Xtest;
-    yCompare = yTest;
-    frameTrackNumsCompare = frameTrackNumsTest;
-    frameTimesCompare = frameTimesTest;
-    frameUtterancesCompare = frameUtterancesTest;
-    trackListCompare = trackListTest;
-else
-    Xcompare = Xdev;
-    yCompare = yDev;
-    frameTrackNumsCompare = frameTrackNumsDev;
-    frameTimesCompare = frameTimesDev;
-    frameUtterancesCompare = frameUtterancesDev;
-    trackListCompare = trackListDev;
-end
+frameTimesTrain(idxToDrop) = [];
+frameTrackNumsTrain(idxToDrop) = [];
+frameUtterNumsTrain(idxToDrop) = [];
+Xtrain(idxToDrop, :) = [];
+yTrain(idxToDrop) = [];
 %% normalize data
 
 % normalize train data
-[Xtrain, centeringValues, scalingValues] = normalize(Xtrain);
+[Xtrain, normalizeCenteringValues, normalizeScalingValues] = ...
+    normalize(Xtrain);
 
-% normalize compare (dev or test) data using the same centering values 
-% and scaling values used to normalize the train data
-Xcompare = normalize(Xcompare, 'center', centeringValues, 'scale', scalingValues);
+% normalize compare data using the same centering values and scaling values
+% used to normalize the train data
+Xcompare = normalize(Xcompare, 'center', normalizeCenteringValues, ...
+    'scale', normalizeScalingValues);
+
+%% clear unnecessary variables
+clear useTestSet useAllAnnotators
+clear trackListTrain trackListDev trackListTest
+clear idxNeutral idxDissatisfied numNeutral numDissatisfied
+clear selections idxToDrop
