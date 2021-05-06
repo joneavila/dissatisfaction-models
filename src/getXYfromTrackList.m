@@ -6,7 +6,7 @@ function [X, y, frameTrackNums, frameTimes, frameUtterances] = ...
 % It is a temporary solution while we decide whether to keep this feature.
 
     % config
-    addTimeFeature = true;
+    addTimeFeature = false;
 
     X = [];
     y = [];
