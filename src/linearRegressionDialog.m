@@ -1,20 +1,26 @@
 % logisticRegressionDialog.m
+%% prepare the data used in the frame-level model
+% primarily to get normalizeCenteringValues and normalizeScalingValues to
+% normalize the dialog-level dev data accordingly
+prepareData; 
 
-%% load the linear regressor
-% to train and save the linear regressor, run linearRegression.m
-model = load('linearRegressor.mat');
-model = model.model;
+% clear any unecessary variables left over from the script
+clear frameTimesCompare frameTimesTrain
+clear frameTrackNumsCompare frameTrackNumsTrain
+clear frameUtterNumsCompare frameUtterNumsTrain
+clear numDifference
+clear Xcompare Xtrain yCompare yTrain
+
+%% load the saved linear model
+load('linearRegressor.mat', 'linearRegressor');
+
+%% predict on the dev set
 
 trackListTrain = gettracklist('train-dialog.tl');
 trackListDev = gettracklist('dev-dialog.tl');
 trackListTest = gettracklist('test-dialog.tl');
 
 featureSpec = getfeaturespec('.\mono-extended.fss');
-
-%% predict on the training set
-nTracks = size(trackListDev, 2);
-yPred = zeros(size(trackListDev));
-yActual = zeros(size(trackListDev));
 
 plotDirectory = append(pwd, "\src\time-pred-plots\");
 mkdir(plotDirectory);
@@ -27,14 +33,22 @@ callTable = readtable('call-log.xlsx', opts);
 predN = []; % for storing predictions on neutral dialogs
 predD = []; % for storing predictions on dissatisifed dialogs
 
+volFeatNum = 8;
+volFeat = featureSpec(volFeatNum);
+volFeatAbbrev = volFeat.abbrev;
+fprintf('Feature number %d is "%s"\n', volFeatNum, volFeatAbbrev);
+
+nTracks = size(trackListDev, 2);
+yPred = zeros(size(trackListDev));
+yActual = zeros(size(trackListDev));
 for trackNum = 1:nTracks
     
     track = trackListDev{trackNum};
     fprintf('[%d/%d] %s\n', trackNum, nTracks, track.filename);
     
     % get the X for that dialog
-    % try to load the pre-computed monster, else compute it and save it
-    % for future runs
+    % try to load the precomputed data, else compute it and save it for 
+    % future runs
     customerSide = 'l';
     filename = track.filename;
     trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
@@ -42,10 +56,31 @@ for trackNum = 1:nTracks
     saveFilename = append(pwd, '\data\dialog-level-linear\', name, '.mat');
     try
         monster = load(saveFilename);
+        monster = monster.monster;
     catch 
         [~, monster] = makeTrackMonster(trackSpec, featureSpec);
         save(saveFilename, 'monster');
     end
+    
+    % replace NaNs with zero
+    numNan = length(find(isnan(monster)));
+    monster(isnan(monster)) = 0;
+    fprintf('\t%d NaNs replaced with zero\n', numNan);
+    
+    % normalize X (monster) using the same centering values and scaling 
+    % values used to normalize the data used for training the frame-level
+    % model
+    monster = normalize(monster, 'center', normalizeCenteringValues, ...
+    'scale', normalizeScalingValues);
+
+    % discard frames where volume is below threshold
+    numFramesTotal = size(monster, 1);
+    volThresh = 0.99;
+    framesBelowVolThreshIndx = find(monster(:,volFeatNum) < volThresh);
+    numFramesBelowVolThresh = length(framesBelowVolThreshIndx);
+    fprintf('\t%d out of %d frames below volThresh=%.2f\n', ...
+        numFramesBelowVolThresh, numFramesTotal, volThresh);
+    % monster(framesBelowVolThreshIndx, :) = [];
     
     % get the known Y for that dialog
     matchingIdx = strcmp(callTable.filename, track.filename);
@@ -56,7 +91,7 @@ for trackNum = 1:nTracks
     
     % predict on X using the linear regressor
     % take the average of the predictions and make it the final one
-    dialogPred = predict(model, monster.monster);
+    dialogPred = predict(linearRegressor, monster);
     dialogPredMean = mean(dialogPred, 'omitnan');
     yPred(trackNum) = dialogPredMean;
     
