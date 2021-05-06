@@ -2,7 +2,7 @@
 %% prepare the data used in the frame-level model
 % primarily to get normalizeCenteringValues and normalizeScalingValues to
 % normalize the dialog-level dev data accordingly
-prepareData; 
+prepareData;
 
 % clear any unecessary variables left over from the script
 clear frameTimesCompare frameTimesTrain
@@ -139,9 +139,9 @@ genHistogramForModel(predN, predD, modelName)
 % since the data is balanced, should be exactly 0.5
 yBaseline = ones(size(yActual));
 
-thresholdMin = min(yPred);
-thresholdMax = max(yPred);
-thresholdNum = 100;
+thresholdMin = -1.5;
+thresholdMax = 1.5;
+thresholdNum = 500;
 thresholdStep = (thresholdMax - thresholdMin) / thresholdNum;
 beta = 0.25;
 
@@ -166,8 +166,8 @@ for threshold = thresholdMin:thresholdStep:thresholdMax
     [fscoreModel, precModel, recallModel] = fScore(yActual, ...
         yPredAfterThreshold, 1, 0, beta);
     
-    fprintf('\tthreshold=%.2f fscore=%.2f prec=%.2f recall=%2.f mse=%.2f\n', ...
-        threshold, fscoreModel, precModel, recallModel, thresholdMse);
+%     fprintf('\tthreshold=%.2f fscore=%.2f prec=%.2f recall=%2.f mse=%.2f\n', ...
+%         threshold, fscoreModel, precModel, recallModel, thresholdMse);
 end
 
 fprintf('\nbest MSE=%.2f at threshold=%.2f\n', bestMse, bestThreshold);
