@@ -32,7 +32,6 @@ function [score, precision, recall] = fScore(yActual, yPred, classPositive, clas
         error('(tp + fp + fn + tn) is less than the number of tracks')
     end
     
-    %%
     % calculate f score
     precision = tp / (tp + fp);
     recall = tp / (tp + fn);
