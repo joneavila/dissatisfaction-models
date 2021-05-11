@@ -104,6 +104,8 @@ for trackNum = 1:nTracks
         error('unknown float: %f\n', actualFloat);
     end
     
+    dialogActual = ones(size(dialogPred)) * actualFloat;
+    
     % print min, max predictions and corresponding times
     [predMin, indMin] = min(dialogPred);
     [predMax, indMax] = max(dialogPred);
@@ -118,14 +120,20 @@ for trackNum = 1:nTracks
     % plot predictions over time
     % dialogPred
     % add the total time to the title
+    figWidth = 1920;
+    figHeight = 1080;
+    fig = figure('visible', 'off', 'position', [0,0,figWidth,figHeight]);
     x = (1:length(dialogPred)) * milliseconds(10);
     y = dialogPred;
     plot(x, y);
+    hold on
+    plot(x, dialogActual);
+    legend('dialogPred','dialogActual')
     title(sprintf('%s\n', filename));
     xlabel('time (seconds)');
     ylabel('dissatisfaction');
-    ax = gca;
-    exportgraphics(ax, sprintf('%s/%s.jpg', plotDirectory, name));
+    ylim([-0.25 1.25]) % fix the y-axis range
+    exportgraphics(gca, sprintf('%s/%s.jpg', plotDirectory, name));
     
 end
 
@@ -162,9 +170,9 @@ for threshold = thresholdMin:thresholdStep:thresholdMax
         bestMse = thresholdMse;
         bestThreshold = threshold;
     end
-   
-    [fscoreModel, precModel, recallModel] = fScore(yActual, ...
-        yPredAfterThreshold, 1, 0, beta);
+    
+%     [fscoreModel, precModel, recallModel] = fScore(yActual, ...
+%         yPredAfterThreshold, 1, 0, beta);
     
 %     fprintf('\tthreshold=%.2f fscore=%.2f prec=%.2f recall=%2.f mse=%.2f\n', ...
 %         threshold, fscoreModel, precModel, recallModel, thresholdMse);
@@ -176,11 +184,11 @@ fprintf('regressor at best threshold\n');
 yPredAfterThreshold = yPred >= bestThreshold;
 [fscoreModel, precModel, recallModel] = fScore(yActual, ...
     yPredAfterThreshold, 1, 0, beta);
-fprintf('\tfscore=%.2f prec=%.2f recall=%2.f \n', ...
+fprintf('\tfscore=%.2f prec=%.2f recall=%.2f \n', ...
     fscoreModel, precModel, recallModel);
 
 fprintf('baseline (always predict 1)\n');
 [fscoreBaseline, precBaseline, recallBaseline] = fScore(yActual, ...
     yBaseline, 1, 0, beta);
-fprintf('\tfscore=%.2f prec=%.2f recall=%2.f \n', ...
+fprintf('\tfscore=%.2f prec=%.2f recall=%.2f \n', ...
     fscoreBaseline, precBaseline, recallBaseline);
