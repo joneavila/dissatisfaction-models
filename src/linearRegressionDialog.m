@@ -1,194 +1,152 @@
 % logisticRegressionDialog.m
 %% prepare the data used in the frame-level model
-% primarily to get normalizeCenteringValues and normalizeScalingValues to
-% normalize the dialog-level dev data accordingly
+% to get 'normalizeCenteringValues' and 'normalizeScalingValues' to
+% normalize the dialog-level data using the same values
 prepareData;
 
-% clear any unecessary variables left over from the script
+% clear unecessary variables left over from the prepareData script
 clear frameTimesCompare frameTimesTrain
 clear frameTrackNumsCompare frameTrackNumsTrain
 clear frameUtterNumsCompare frameUtterNumsTrain
 clear numDifference
 clear Xcompare Xtrain yCompare yTrain
 
-%% load the saved linear model
-load('linearRegressor.mat', 'linearRegressor');
-
-%% predict on the dev set
-
+%% predict on the train set and compare set to build their feature sets
 trackListTrain = gettracklist('train-dialog.tl');
-trackListDev = gettracklist('dev-dialog.tl');
-trackListTest = gettracklist('test-dialog.tl');
+trackListCompare = gettracklist('dev-dialog.tl');
+% trackListCompare = gettracklist('test-dialog.tl');
 
-featureSpec = getfeaturespec('.\mono-extended.fss');
+[XsummaryTrain, yActualTrain] = getSummaryXy(trackListTrain, ...
+    normalizeCenteringValues, normalizeScalingValues);
+[XsummaryCompare, yActualCompare] = getSummaryXy(trackListCompare, ...
+    normalizeCenteringValues, normalizeScalingValues);
 
-plotDirectory = append(pwd, "\src\time-pred-plots\");
-mkdir(plotDirectory);
+%% train the second regressor
+secondLinearRegressor = fitlm(XsummaryTrain, yActualTrain);
 
-% from call-log.xlsx, load the 'filename' and 'label' columns
-opts = spreadsheetImportOptions('NumVariables', 2, 'DataRange', ...
-    'H2:I203', 'VariableNamesRange', 'H1:I1');
-callTable = readtable('call-log.xlsx', opts);
+%% use the second regressor to predict on compare data
+yPred = predict(secondLinearRegressor, XsummaryCompare);
 
-predN = []; % for storing predictions on neutral dialogs
-predD = []; % for storing predictions on dissatisifed dialogs
+% the baseline always predicts dissatisfied (1 for positive class)
+yBaseline = ones(size(yPred));
 
-volFeatNum = 8;
-volFeat = featureSpec(volFeatNum);
-volFeatAbbrev = volFeat.abbrev;
-fprintf('Feature number %d is "%s"\n', volFeatNum, volFeatAbbrev);
-
-nTracks = size(trackListDev, 2);
-yPred = zeros(size(trackListDev));
-yActual = zeros(size(trackListDev));
-for trackNum = 1:nTracks
-    
-    track = trackListDev{trackNum};
-    fprintf('[%d/%d] %s\n', trackNum, nTracks, track.filename);
-    
-    % get the X for that dialog
-    % try to load the precomputed data, else compute it and save it for 
-    % future runs
-    customerSide = 'l';
-    filename = track.filename;
-    trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
-    [~, name, ~] = fileparts(filename);
-    saveFilename = append(pwd, '\data\dialog-level-linear\', name, '.mat');
-    try
-        monster = load(saveFilename);
-        monster = monster.monster;
-    catch 
-        [~, monster] = makeTrackMonster(trackSpec, featureSpec);
-        save(saveFilename, 'monster');
-    end
-    
-    % replace NaNs with zero
-    numNan = length(find(isnan(monster)));
-    monster(isnan(monster)) = 0;
-    fprintf('\t%d NaNs replaced with zero\n', numNan);
-    
-    % normalize X (monster) using the same centering values and scaling 
-    % values used to normalize the data used for training the frame-level
-    % model
-    monster = normalize(monster, 'center', normalizeCenteringValues, ...
-    'scale', normalizeScalingValues);
-
-    % discard frames where volume is below threshold
-    numFramesTotal = size(monster, 1);
-    volThresh = 0.99;
-    framesBelowVolThreshIndx = find(monster(:,volFeatNum) < volThresh);
-    numFramesBelowVolThresh = length(framesBelowVolThreshIndx);
-    fprintf('\t%d out of %d frames below volThresh=%.2f\n', ...
-        numFramesBelowVolThresh, numFramesTotal, volThresh);
-    % monster(framesBelowVolThreshIndx, :) = [];
-    
-    % get the known Y for that dialog
-    matchingIdx = strcmp(callTable.filename, track.filename);
-    actualLabel = callTable(matchingIdx, :).label{1};
-    actualFloat = labelToFloat(actualLabel);
-    
-    yActual(trackNum) = actualFloat;
-    
-    % predict on X using the linear regressor
-    % take the average of the predictions and make it the final one
-    dialogPred = predict(linearRegressor, monster);
-    dialogPredMean = mean(dialogPred, 'omitnan');
-    yPred(trackNum) = dialogPredMean;
-    
-    % add the predictions to predN or predD to print a histogram later
-    if actualFloat == 0
-        predN = [predN dialogPredMean];
-    elseif actualFloat == 1
-        predD = [predD dialogPredMean];
-    else
-        error('unknown float: %f\n', actualFloat);
-    end
-    
-    dialogActual = ones(size(dialogPred)) * actualFloat;
-    
-    % print min, max predictions and corresponding times
-    [predMin, indMin] = min(dialogPred);
-    [predMax, indMax] = max(dialogPred);
-    predTimeSecondsMin = frameNumToTime(indMin);
-    predTimeSecondsMax = frameNumToTime(indMax);
-    fprintf('\tpredMean=%.2f\n', dialogPredMean);
-    fprintf('\tpredMin=%.2f, predTimeMin="%s"\n', ...
-        predMin, datestr(predTimeSecondsMin, 'MM:SS'));
-    fprintf('\tpredMax=%.2f, predTimeMax="%s"\n', ...
-        predMax, datestr(predTimeSecondsMax, 'MM:SS'));
-    
-    % plot predictions over time
-    % dialogPred
-    % add the total time to the title
-    figWidth = 1920;
-    figHeight = 1080;
-    fig = figure('visible', 'off', 'position', [0,0,figWidth,figHeight]);
-    x = (1:length(dialogPred)) * milliseconds(10);
-    y = dialogPred;
-    plot(x, y);
-    hold on
-    plot(x, dialogActual);
-    legend('dialogPred','dialogActual')
-    title(sprintf('%s\n', filename));
-    xlabel('time (seconds)');
-    ylabel('dissatisfaction');
-    ylim([-0.25 1.25]) % fix the y-axis range
-    exportgraphics(gca, sprintf('%s/%s.jpg', plotDirectory, name));
-    
-end
-
-%% generate histogram for predictions on neutral vs dissatisfied dialogs
-modelName = 'dialog-level (linear regression) dev (tweak)';
-genHistogramForModel(predN, predD, modelName)
+mse = @(actual, pred) (mean((actual - pred) .^ 2));
+secondMse = mse(yPred', yActualCompare);
 
 %% try different thresholds
 
-% the baseline predicts the average of the train set
-% since the data is balanced, should be exactly 0.5
-yBaseline = ones(size(yActual));
-
-thresholdMin = -1.5;
-thresholdMax = 1.5;
-thresholdNum = 500;
-thresholdStep = (thresholdMax - thresholdMin) / thresholdNum;
+thresholdMin = 0;
+thresholdMax = 1;
+thresholdNum = 50;
+thresholdStep = (thresholdMax - thresholdMin) / (thresholdNum - 1);
+thresholds = thresholdMin:thresholdStep:thresholdMax;
 beta = 0.25;
 
-bestMse = realmax;
-bestThreshold = 0;
+varTypes = ["double", "double", "double", "double", "double"];
+varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
+sz = [thresholdNum, length(varNames)];
+resultTable = table('Size', sz, 'VariableTypes', varTypes, 'VariableNames', varNames);
 
 fprintf('beta=%.2f min(yPred)=%.2f max(yPred)=%2.f mean(yPred)=%.2f\n', ...
     beta, min(yPred), max(yPred), mean(yPred));
 
-mse = @(actual, pred) (mean((actual - pred) .^ 2));
-
-for threshold = thresholdMin:thresholdStep:thresholdMax
-    
+for i = 1:length(thresholds)
+    threshold = thresholds(i);
     yPredAfterThreshold = yPred >= threshold;
-    thresholdMse = mse(yPredAfterThreshold, yActual);
-    
-    if thresholdMse < bestMse
-        bestMse = thresholdMse;
-        bestThreshold = threshold;
-    end
-    
-%     [fscoreModel, precModel, recallModel] = fScore(yActual, ...
-%         yPredAfterThreshold, 1, 0, beta);
-    
-%     fprintf('\tthreshold=%.2f fscore=%.2f prec=%.2f recall=%2.f mse=%.2f\n', ...
-%         threshold, fscoreModel, precModel, recallModel, thresholdMse);
+    [score, precision, recall] = fScore(yActualCompare, ...
+        yPredAfterThreshold, 1, 0, beta);
+    resultTable{i, 1} = threshold;
+    resultTable{i, 2} = mse(yPredAfterThreshold, yActualCompare');
+    resultTable{i, 3} = score;
+    resultTable{i, 4} = precision;
+    resultTable{i, 5} = recall;
 end
 
-fprintf('\nbest MSE=%.2f at threshold=%.2f\n', bestMse, bestThreshold);
+[bestScoreValue, bestScoreIdx] = max(resultTable{:, 3});
+bestScoreThreshold = resultTable{bestScoreIdx, 1};
+fprintf('bestScoreThreshold=%.3f, bestScoreValue=%.3f\n', bestScoreThreshold, bestScoreValue);
 
-fprintf('regressor at best threshold\n');
-yPredAfterThreshold = yPred >= bestThreshold;
-[fscoreModel, precModel, recallModel] = fScore(yActual, ...
-    yPredAfterThreshold, 1, 0, beta);
-fprintf('\tfscore=%.2f prec=%.2f recall=%.2f \n', ...
-    fscoreModel, precModel, recallModel);
+yBaselineAfterThreshold = yBaseline >= bestScoreThreshold;
+baselineMse = mse(yBaselineAfterThreshold, yActualCompare');
+[baselineScore, baselinePrecision, baselineRecall] = fScore(yActualCompare, ...
+        yBaselineAfterThreshold, 1, 0, beta);
+fprintf('baselineMse=%.2f, baselineScore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f\n', ...
+    baselineMse, baselineScore, baselinePrecision, baselineRecall);
 
-fprintf('baseline (always predict 1)\n');
-[fscoreBaseline, precBaseline, recallBaseline] = fScore(yActual, ...
-    yBaseline, 1, 0, beta);
-fprintf('\tfscore=%.2f prec=%.2f recall=%.2f \n', ...
-    fscoreBaseline, precBaseline, recallBaseline);
+function [Xsummary, yActual] = getSummaryXy(tracklist, normalizeCenteringValues, normalizeScalingValues)
+
+    % load the linear regressor saved in linearRegressionFrame.m
+    load('linearRegressor.mat', 'linearRegressor');
+
+    featureSpec = getfeaturespec('.\mono-extended.fss');
+    nTracks = size(tracklist, 2);
+
+    numSummaryFeatures = 5;
+    Xsummary = zeros([nTracks numSummaryFeatures]);
+    yActual = zeros(size(tracklist));
+
+    for trackNum = 1:nTracks
+
+        track = tracklist{trackNum};
+        fprintf('[%d/%d] %s\n', trackNum, nTracks, track.filename);
+
+        % get the X for that dialog
+        % try to load the precomputed data, else compute it and save it for 
+        % future runs
+        customerSide = 'l';
+        filename = track.filename;
+        trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
+        [~, name, ~] = fileparts(filename);
+        saveFilename = append(pwd, '\data\dialog-level-linear\', name, '.mat');
+        try
+            monster = load(saveFilename);
+            monster = monster.monster;
+        catch 
+            [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+            save(saveFilename, 'monster');
+        end
+
+        % replace NaNs with zero
+        % TODO remove this code after recomputing monsters
+        % numNan = length(find(isnan(monster)));
+        monster(isnan(monster)) = 0;
+        % fprintf('\t%d NaNs replaced with zero\n', numNan);
+
+        % normalize X (monster) using the same centering values and scaling 
+        % values used to normalize the data used for training the frame-level
+        % model
+        monster = normalize(monster, 'center', normalizeCenteringValues, ...
+        'scale', normalizeScalingValues);
+
+        % get the known Y for that dialog
+        % from call-log.xlsx, load the 'filename' and 'label' columns
+        opts = spreadsheetImportOptions('NumVariables', 2, 'DataRange', ...
+            'H2:I203', 'VariableNamesRange', 'H1:I1');
+        callTable = readtable('call-log.xlsx', opts);
+        matchingIdx = strcmp(callTable.filename, track.filename);
+        actualLabel = callTable(matchingIdx, :).label{1};
+        actualFloat = labelToFloat(actualLabel);
+
+        yActual(trackNum) = actualFloat;
+
+        % predict on X using the linear regressor
+        % take the average of the predictions and make it the final one
+        dialogPred = predict(linearRegressor, monster);
+
+        % feature 1 - number of frames in dialogPred above the best treshold 
+        % (the threshold with best F_0.25 score, found in 
+        % linearRegressionFrame.m) divided by the number of total frames
+        % feature 2 - max of dialogPred
+        % feature 3 - standard deviation of dialogPred
+        % feature 4 - range of dialogPred
+        % feature 5 - average of dialogPred
+        bestThreshold = 0.555;
+        Xsummary(trackNum, 1) = nnz(dialogPred > bestThreshold) / length(dialogPred);
+        Xsummary(trackNum, 2) = max(dialogPred);
+        Xsummary(trackNum, 3) = std(dialogPred);
+        Xsummary(trackNum, 4) = max(dialogPred) - min(dialogPred);
+        Xsummary(trackNum, 5) = mean(dialogPred);
+
+    end
+
+end
