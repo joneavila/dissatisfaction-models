@@ -45,7 +45,8 @@ beta = 0.25;
 varTypes = ["double", "double", "double", "double", "double"];
 varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
 sz = [thresholdNum, length(varNames)];
-resultTable = table('Size', sz, 'VariableTypes', varTypes, 'VariableNames', varNames);
+resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
+    'VariableNames', varNames);
 
 fprintf('beta=%.2f min(yPred)=%.2f max(yPred)=%2.f mean(yPred)=%.2f\n', ...
     beta, min(yPred), max(yPred), mean(yPred));
@@ -64,16 +65,18 @@ end
 
 [bestScoreValue, bestScoreIdx] = max(resultTable{:, 3});
 bestScoreThreshold = resultTable{bestScoreIdx, 1};
-fprintf('bestScoreThreshold=%.3f, bestScoreValue=%.3f\n', bestScoreThreshold, bestScoreValue);
+fprintf('bestScoreThreshold=%.3f, bestScoreValue=%.3f\n', ...
+    bestScoreThreshold, bestScoreValue);
 
 yBaselineAfterThreshold = yBaseline >= bestScoreThreshold;
 baselineMse = mse(yBaselineAfterThreshold, yActualCompare');
-[baselineScore, baselinePrecision, baselineRecall] = fScore(yActualCompare, ...
-        yBaselineAfterThreshold, 1, 0, beta);
+[baselineScore, baselinePrecision, baselineRecall] = ...
+    fScore(yActualCompare, yBaselineAfterThreshold, 1, 0, beta);
 fprintf('baselineMse=%.2f, baselineScore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f\n', ...
     baselineMse, baselineScore, baselinePrecision, baselineRecall);
 
-function [Xsummary, yActual] = getSummaryXy(tracklist, normalizeCenteringValues, normalizeScalingValues)
+function [Xsummary, yActual] = getSummaryXy(tracklist, ...
+    normalizeCenteringValues, normalizeScalingValues)
 
     % load the linear regressor saved in linearRegressionFrame.m
     load('linearRegressor.mat', 'linearRegressor');
@@ -97,7 +100,8 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, normalizeCenteringValues,
         filename = track.filename;
         trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
         [~, name, ~] = fileparts(filename);
-        saveFilename = append(pwd, '\data\dialog-level-linear\', name, '.mat');
+        saveFilename = append(pwd, '\data\dialog-level-linear\', ...
+            name, '.mat');
         try
             monster = load(saveFilename);
             monster = monster.monster;
@@ -113,10 +117,10 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, normalizeCenteringValues,
         % fprintf('\t%d NaNs replaced with zero\n', numNan);
 
         % normalize X (monster) using the same centering values and scaling 
-        % values used to normalize the data used for training the frame-level
-        % model
-        monster = normalize(monster, 'center', normalizeCenteringValues, ...
-        'scale', normalizeScalingValues);
+        % values used to normalize the data used for training the 
+        % frame-level model
+        monster = normalize(monster, 'center', ...
+            normalizeCenteringValues, 'scale', normalizeScalingValues);
 
         % get the known Y for that dialog
         % from call-log.xlsx, load the 'filename' and 'label' columns
@@ -133,15 +137,16 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, normalizeCenteringValues,
         % take the average of the predictions and make it the final one
         dialogPred = predict(linearRegressor, monster);
 
-        % feature 1 - number of frames in dialogPred above the best treshold 
-        % (the threshold with best F_0.25 score, found in 
+        % feature 1 - number of frames in dialogPred above the best 
+        % threshold (the threshold with best F_0.25 score, found in 
         % linearRegressionFrame.m) divided by the number of total frames
         % feature 2 - max of dialogPred
         % feature 3 - standard deviation of dialogPred
         % feature 4 - range of dialogPred
         % feature 5 - average of dialogPred
         bestThreshold = 0.555;
-        Xsummary(trackNum, 1) = nnz(dialogPred > bestThreshold) / length(dialogPred);
+        Xsummary(trackNum, 1) = nnz(dialogPred > bestThreshold) / ...
+            length(dialogPred);
         Xsummary(trackNum, 2) = max(dialogPred);
         Xsummary(trackNum, 3) = std(dialogPred);
         Xsummary(trackNum, 4) = max(dialogPred) - min(dialogPred);
