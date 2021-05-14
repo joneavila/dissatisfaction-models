@@ -21,6 +21,75 @@ trackListCompare = gettracklist('dev-dialog.tl');
 [XsummaryCompare, yActualCompare] = getSummaryXy(trackListCompare, ...
     normalizeCenteringValues, normalizeScalingValues);
 
+%% plot histograms for summary features
+% for neutral versus dissatisfied dialogs in combined train and compare set
+
+XsummaryCombined = [XsummaryTrain; XsummaryCompare];
+yActualCombined = [yActualTrain yActualCompare];
+
+% separate XsummaryCombined into XsummaryCombNeutral and XsummaryCombDiss
+XsummaryCombNeutral = [];
+XsummaryCombDiss = [];
+for dialogNum = 1:length(yActualCombined)
+    label = yActualCombined(dialogNum);
+    if label == 0
+        XsummaryCombNeutral = [XsummaryCombNeutral; XsummaryCombined(dialogNum, :)];
+    elseif label == 1
+        XsummaryCombDiss = [XsummaryCombDiss; XsummaryCombined(dialogNum, :)];
+    else
+        error('unexpected label');
+    end
+end
+
+% plot a histogram for each summary feature
+% NOTE: featureNames are hardcoded and need to match the order seen in the
+% getSummaryXy function at the bottom of this script
+featureNames = ["ratio" "min" "max" "average" "range" "std"];
+nBins = 32;
+barColorN = '#1e88e5'; 
+barColorD = '#fb8c00';
+imageDir = append(pwd, "\src\histograms-summary-features\");
+
+mkdir(imageDir);
+
+for featureNum = 1:length(featureNames)
+    f = figure('Visible', 'off');
+    
+    % histogram for neutral
+    hN = histogram(XsummaryCombNeutral(:, featureNum), nBins);
+    hN.FaceColor = barColorN;
+    
+    hold on
+   
+    % histogram for dissatisfied
+    hD = histogram(XsummaryCombDiss(:, featureNum), nBins);
+    hD.FaceColor = barColorD;
+    
+    % normalize the histograms so that all bar heights add to 1
+    hN.Normalization = 'probability';
+    hD.Normalization = 'probability';
+    
+    % adjust bars so that both plots align
+    hN.BinWidth = hD.BinWidth;
+    hN.BinEdges = hD.BinEdges;
+    
+    % add titles, axes labels, and legend
+    featureName = featureNames(featureNum);
+    titleText = sprintf('feature %d (%s)', featureNum, featureName);
+    subtitleText = sprintf('train and dev data, %d bins, normalized bars', nBins);
+    title(titleText, subtitleText);
+    ylabel('Number in bin');
+    xlabel('Bin');
+    legend('neutral','dissatisfied')
+    
+    % save image
+    imageFilepath = append(imageDir, titleText, ".png");
+    saveas(f, imageFilepath);
+    fprintf('Saved image to %s\n', imageFilepath);
+    
+    clf;
+end
+
 %% train the second regressor
 secondLinearRegressor = fitlm(XsummaryTrain, yActualTrain);
 
@@ -51,16 +120,16 @@ resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
 fprintf('beta=%.2f min(yPred)=%.2f max(yPred)=%2.f mean(yPred)=%.2f\n', ...
     beta, min(yPred), max(yPred), mean(yPred));
 
-for i = 1:length(thresholds)
-    threshold = thresholds(i);
+for thresholdNum = 1:length(thresholds)
+    threshold = thresholds(thresholdNum);
     yPredAfterThreshold = yPred >= threshold;
     [score, precision, recall] = fScore(yActualCompare, ...
         yPredAfterThreshold, 1, 0, beta);
-    resultTable{i, 1} = threshold;
-    resultTable{i, 2} = mse(yPredAfterThreshold, yActualCompare');
-    resultTable{i, 3} = score;
-    resultTable{i, 4} = precision;
-    resultTable{i, 5} = recall;
+    resultTable{thresholdNum, 1} = threshold;
+    resultTable{thresholdNum, 2} = mse(yPredAfterThreshold, yActualCompare');
+    resultTable{thresholdNum, 3} = score;
+    resultTable{thresholdNum, 4} = precision;
+    resultTable{thresholdNum, 5} = recall;
 end
 
 [bestScoreValue, bestScoreIdx] = max(resultTable{:, 3});
