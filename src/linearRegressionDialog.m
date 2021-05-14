@@ -140,18 +140,20 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
         % feature 1 - number of frames in dialogPred above the best 
         % threshold (the threshold with best F_0.25 score, found in 
         % linearRegressionFrame.m) divided by the number of total frames
-        % feature 2 - max of dialogPred
-        % feature 3 - standard deviation of dialogPred
-        % feature 4 - range of dialogPred
-        % feature 5 - average of dialogPred
+        % feature 2 - min of dialogPred
+        % feature 3 - max of dialogPred
+        % feature 4 - average of dialogPred
+        % feature 5 - range of dialogPred 
+        % feature 6 - standard deviation of dialogPred
         bestThreshold = 0.555;
         Xsummary(trackNum, 1) = nnz(dialogPred > bestThreshold) / ...
             length(dialogPred);
-        Xsummary(trackNum, 2) = max(dialogPred);
-        Xsummary(trackNum, 3) = std(dialogPred);
-        Xsummary(trackNum, 4) = max(dialogPred) - min(dialogPred);
-        Xsummary(trackNum, 5) = mean(dialogPred);
-
+        Xsummary(trackNum, 2) = min(dialogPred);
+        Xsummary(trackNum, 3) = max(dialogPred);
+        Xsummary(trackNum, 4) = mean(dialogPred);
+        Xsummary(trackNum, 5) = range(dialogPred);
+        Xsummary(trackNum, 6) = std(dialogPred);
+        
     end
 
 end
