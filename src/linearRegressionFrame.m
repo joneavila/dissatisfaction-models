@@ -26,7 +26,7 @@ end
 yPred = predict(linearRegressor, Xcompare);
 
 % the baseline always predicts dissatisfied (1 for positive class)
-yBaseline = ones([length(yPred), 1]);
+yBaseline = ones(size(yPred));
 %% print f1 score and more for different thresholds
 
 % Output as of May 5, 2021:
