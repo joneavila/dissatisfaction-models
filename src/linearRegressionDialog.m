@@ -16,9 +16,9 @@ trackListTrain = gettracklist('train-dialog.tl');
 trackListCompare = gettracklist('dev-dialog.tl');
 % trackListCompare = gettracklist('test-dialog.tl');
 
-[XsummaryTrain, yActualTrain] = getSummaryXy(trackListTrain, ...
+[XsummaryTrain, yActualTrain] = getSummaryXy(trackListTrain, 'train', ...
     normalizeCenteringValues, normalizeScalingValues);
-[XsummaryCompare, yActualCompare] = getSummaryXy(trackListCompare, ...
+[XsummaryCompare, yActualCompare] = getSummaryXy(trackListCompare, 'compare', ...
     normalizeCenteringValues, normalizeScalingValues);
 
 %% plot histograms for summary features
@@ -144,7 +144,7 @@ baselineMse = mse(yBaselineAfterThreshold, yActualCompare');
 fprintf('baselineMse=%.2f, baselineScore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f\n', ...
     baselineMse, baselineScore, baselinePrecision, baselineRecall);
 
-function [Xsummary, yActual] = getSummaryXy(tracklist, ...
+function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
     normalizeCenteringValues, normalizeScalingValues)
 
     % load the linear regressor saved in linearRegressionFrame.m
@@ -222,6 +222,25 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
         Xsummary(trackNum, 4) = mean(dialogPred);
         Xsummary(trackNum, 5) = range(dialogPred);
         Xsummary(trackNum, 6) = std(dialogPred);
+        
+        % plot dialogPred over time
+        plotDirectory = append(pwd, "\src\time-pred-plots-", tracklistName, "\");
+        mkdir(plotDirectory);
+        figWidth = 1920;
+        figHeight = 1080;
+        fig = figure('visible', 'off', 'position', ...
+            [0, 0, figWidth, figHeight]);
+        x = (1:length(dialogPred)) * milliseconds(10);
+        y = dialogPred;
+        plot(x, y);
+        % hold on
+        % plot(x, dialogActual);
+        % legend('dialogPred','dialogActual')
+        title(sprintf('%s\n', filename));
+        xlabel('time (seconds)');
+        ylabel('dissatisfaction');
+        ylim([-0.25 1.25]) % fix the y-axis range
+        exportgraphics(gca, sprintf('%s/%s.jpg', plotDirectory, name));
         
     end
 
