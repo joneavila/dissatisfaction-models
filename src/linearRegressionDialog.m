@@ -52,6 +52,7 @@ imageDir = append(pwd, "\src\histograms-summary-features\");
 
 mkdir(imageDir);
 
+
 for featureNum = 1:length(featureNames)
     f = figure('Visible', 'off');
     
@@ -132,6 +133,7 @@ for thresholdNum = 1:length(thresholds)
     resultTable{thresholdNum, 5} = recall;
 end
 
+% TODO add MSE in print here
 [bestScoreValue, bestScoreIdx] = max(resultTable{:, 3});
 bestScoreThreshold = resultTable{bestScoreIdx, 1};
 fprintf('bestScoreThreshold=%.3f, bestScoreValue=%.3f\n', ...
@@ -158,15 +160,28 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
     yActual = zeros(size(tracklist));
 
     for trackNum = 1:nTracks
-
+        
         track = tracklist{trackNum};
-        fprintf('[%d/%d] %s\n', trackNum, nTracks, track.filename);
+        filename = track.filename;
+        fprintf('[%02d/%d] %s... ', trackNum, nTracks, track.filename);
+        
+        % get the annotation path, assuming they share the same name
+        [~, name, ~] = fileparts(filename);
+        annFilename = append(name, ".txt");
+        annotator = 'ad';
+        annotationPath = append('annotations\', annotator, '-annotations\', annFilename);
+        
+        % skip this dialog if the annotation file does not exist
+        if ~exist(annotationPath, 'file')
+            fprintf('annotation file not found\n');
+            continue
+        end
 
         % get the X for that dialog
         % try to load the precomputed data, else compute it and save it for 
         % future runs
         customerSide = 'l';
-        filename = track.filename;
+        
         trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
         [~, name, ~] = fileparts(filename);
         saveFilename = append(pwd, '\data\dialog-level-linear\', ...
@@ -179,17 +194,31 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
             save(saveFilename, 'monster');
         end
 
-        % replace NaNs with zero
-        % TODO remove this code after recomputing monsters
-        % numNan = length(find(isnan(monster)));
-        monster(isnan(monster)) = 0;
-        % fprintf('\t%d NaNs replaced with zero\n', numNan);
-
         % normalize X (monster) using the same centering values and scaling 
         % values used to normalize the data used for training the 
         % frame-level model
         monster = normalize(monster, 'center', ...
             normalizeCenteringValues, 'scale', normalizeScalingValues);
+        
+        % trim out-of-character frames from start and end of dialog
+        useFilter = false;
+        annotationTable = readElanAnnotation(annotationPath, useFilter);
+        numRows = size(annotationTable, 1);
+        for rowNum = 1:numRows % find the first non-out-of-character
+            row = annotationTable(rowNum, :);
+            if row.label ~= "o"
+                frameNumStart = round(milliseconds(row.startTime) / 10);
+                break
+            end
+        end
+        for rowNum = numRows:-1:1 % find the last non-out-of-character
+            row = annotationTable(rowNum, :);
+            if row.label ~= "o"
+                frameNumEnd = round(milliseconds(row.startTime) / 10);
+                break
+            end
+        end
+        monster = monster(frameNumStart:frameNumEnd, :);
 
         % get the known Y for that dialog
         % from call-log.xlsx, load the 'filename' and 'label' columns
@@ -223,24 +252,30 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
         Xsummary(trackNum, 5) = range(dialogPred);
         Xsummary(trackNum, 6) = std(dialogPred);
         
-        % plot dialogPred over time
-        plotDirectory = append(pwd, "\src\time-pred-plots-", tracklistName, "\");
-        mkdir(plotDirectory);
-        figWidth = 1920;
-        figHeight = 1080;
-        fig = figure('visible', 'off', 'position', ...
-            [0, 0, figWidth, figHeight]);
-        x = (1:length(dialogPred)) * milliseconds(10);
-        y = dialogPred;
-        plot(x, y);
-        % hold on
-        % plot(x, dialogActual);
-        % legend('dialogPred','dialogActual')
-        title(sprintf('%s\n', filename));
-        xlabel('time (seconds)');
-        ylabel('dissatisfaction');
-        ylim([-0.25 1.25]) % fix the y-axis range
-        exportgraphics(gca, sprintf('%s/%s.jpg', plotDirectory, name));
+%         % TODO update to overlay annotations
+%         % plot dialogPred over time
+%         plotDirectory = append(pwd, "\src\time-pred-plots-", tracklistName, "\");
+%         if ~exist(plotDirectory, 'dir')
+%             mkdir(plotDirectory)
+%         end
+%         
+%         figWidth = 1920;
+%         figHeight = 1080;
+%         fig = figure('visible', 'off', 'position', ...
+%             [0, 0, figWidth, figHeight]);
+%         x = (1:length(dialogPred)) * milliseconds(10);
+%         y = dialogPred;
+%         plot(x, y);
+%         % hold on
+%         % plot(x, dialogActual);
+%         % legend('dialogPred','dialogActual')
+%         title(sprintf('%s\n', filename));
+%         xlabel('time (seconds)');
+%         ylabel('dissatisfaction');
+%         ylim([-0.25 1.25]) % fix the y-axis range
+%         exportgraphics(gca, sprintf('%s/%s.jpg', plotDirectory, name));
+        
+        fprintf('done\n');
         
     end
 
