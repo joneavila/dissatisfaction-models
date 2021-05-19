@@ -5,11 +5,11 @@ useTestSet = false;
 useAllAnnotators = false;
 
 %% load precomputed data if found, else compute it
-trackListTrain = gettracklist('train-frame.tl');
-trackListDev = gettracklist('dev-frame.tl');
-trackListTest = gettracklist('test-frame.tl');
+trackListTrain = gettracklist('tracklists-frame\train.tl');
+trackListDev = gettracklist('tracklists-frame\dev.tl');
+trackListTest = gettracklist('tracklists-frame\test.tl');
 
-featureSpec = getfeaturespec('.\mono-extended.fss');
+featureSpec = getfeaturespec('.\source\mono.fss');
 
 % load the train data if found, else compute it
 if ~exist('Xtrain', 'var') || ~exist('yTrain', 'var') || ...
@@ -39,9 +39,7 @@ if ~exist('Xcompare', 'var') || ~exist('yCompare', 'var') || ...
 end
 
 %% drop neutral (or dissatisfied) frames in the train data to balance it
-
-% set seed for reproducibility
-rng(20210419);
+rng(20210419); % set seed for reproducibility
 
 idxNeutral = find(yTrain == 0);
 idxDissatisfied = find(yTrain == 1);
@@ -62,8 +60,7 @@ if numDifference
     Xtrain(idxToDrop, :) = [];
     yTrain(idxToDrop) = [];
 end
-%% log those peaks
-% Xtrain(:, 99:108) = log(Xtrain(:, 99:108) + 1);
+
 %% normalize data
 
 % normalize train data
