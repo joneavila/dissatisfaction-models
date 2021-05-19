@@ -46,36 +46,31 @@ stdTable = table(stdFeatures, featureAbbrevs);
 %% print out outlier frames in the dev data
 fprintf('***loading dev data to print out outlier frames\n');
 trackListDev = gettracklist('dev-dialog.tl');
-numTracksDev = length(trackListDev);
-for trackNum = 1:numTracksDev
+for trackNum = 1:length(trackListDev)
     track = trackListDev{trackNum};
-    trackFilename = track.filename;
-
-    fprintf('[%2d/%d] %s\n', trackNum, numTracksTrain, trackFilename);
+    fprintf('[%2d/%d] %s\n', trackNum, numTracksTrain, track.filename);
     
     % load the precomputed monster or compute it
-    [~, name, ~] = fileparts(trackFilename);
+    [~, name, ~] = fileparts(track.filename);
     saveFilename = append(pwd, '\data\dialog-level-linear\', name, '.mat');
     try
         monster = load(saveFilename);
         monster = monster.monster;
     catch
         customerSide = 'l';
-        trackSpec = makeTrackspec(customerSide, trackFilename, '.\calls\');
+        trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
         [~, monster] = makeTrackMonster(trackSpec, featureSpec);
         save(saveFilename, 'monster');
     end
     
-    numStdsAway = 5;
+    % for each feature, find all frames 'numStdsAway' standard deviations
+    % away from the mean, stored as 'outlierFrames'
+    numStdsAway = 6;
     maxDifferences = numStdsAway * stdFeatures;
     differences = abs(monster - meanFeatures');
-    outlierFrames = differences > maxDifferences'; % rename 'badFrames'
+    outlierFrames = differences > maxDifferences';
     
-    numFeatures = length(featureSpec);
-    for featureNum = 1:numFeatures
-        
-        
-        
+    for featureNum = 1:length(featureSpec)
         outlierFramesFeature = find(outlierFrames(:, featureNum));
         numOutlierFrames = length(outlierFramesFeature);
         
@@ -84,13 +79,13 @@ for trackNum = 1:numTracksDev
             continue;
         end
         
-        clipsDir = sprintf('%s\\dialog-level-clips\\%s\\feat%2d (%s)', ...
-            pwd, name, featureNum, featureAbbrevs(featureNum));
-        mkdir(clipsDir);
-        
-        feature = featureSpec(featureNum);
-        fprintf('\tfeature %d (%s)\n', featureNum, featureAbbrevs(featureNum));
-        
+        clipsDir = sprintf('%s\\dialog-level-clips\\%s', pwd, name);
+        if ~exist(clipsDir, 'dir')
+            % folder does not exist so create it
+            mkdir(clipsDir);
+        end
+
+               
         lastFrameSeen = 1;
         segmentStart = -1;
         segmentEnd = -1;
@@ -101,40 +96,31 @@ for trackNum = 1:numTracksDev
             if frameNum == lastFrameSeen+1 % continuining
                 
                 segmentEnd = frameNum;
-            else % start of new segment OR end of old segment
-                
-                if segmentStart < 0
-                    segmentStart = frameNum;
-                    segmentEnd = frameNum;
-                else
-                    % fprintf('start=%d end=%d\n', segmentStart, segmentEnd);
-                    
-                    segmentEnd = frameNum;
-                    
-                    % create the clip
-                    % save it in the folder for this dialog
-                    [audioData, sampleRate] = audioread(trackFilename);
-                    
-                    secondsStart = seconds(segmentStart / 100);
-                    secondsEnd = seconds(segmentEnd / 100);
-                    
-                    idxStart = round(seconds(secondsStart) * sampleRate);
-                    idxEnd = round(seconds(secondsEnd) * sampleRate);
-                    newFilename = sprintf('%s\\%.2f-%.2f.wav', ...
-                        clipsDir, seconds(secondsStart), seconds(secondsEnd));
-                    clipData = audioData(idxStart:idxEnd);
-                    audiowrite(newFilename, clipData, sampleRate);
-                    
-                    segmentStart = frameNum;
-                    
-                end
-            end
+            elseif segmentStart < 0  % start of new segment
+                segmentStart = frameNum;
+                segmentEnd = frameNum;
+            else  % end of segment
+                segmentEnd = frameNum;
 
+                % create the clip
+                % save it in the folder for this dialog
+                [audioData, sampleRate] = audioread(track.filename);
+
+                secondsStart = seconds(segmentStart / 100);
+                secondsEnd = seconds(segmentEnd / 100);
+
+                idxStart = round(seconds(secondsStart) * sampleRate);
+                idxEnd = round(seconds(secondsEnd) * sampleRate);
+                newFilename = sprintf('%s\\%.2fs-%.2fs-feat%02d-%s.wav', ...
+                    clipsDir, seconds(secondsStart), ....
+                    seconds(secondsEnd), featureNum, featureAbbrevs(featureNum));
+                clipData = audioData(idxStart:idxEnd);
+                audiowrite(newFilename, clipData, sampleRate);
+
+                segmentStart = frameNum;
+            end
             lastFrameSeen = frameNum;
         end
-        
-        
-        
-    end
-    
-end
+ 
+    end 
+end  % line 140
