@@ -62,6 +62,8 @@ if numDifference
     Xtrain(idxToDrop, :) = [];
     yTrain(idxToDrop) = [];
 end
+%% log those peaks
+% Xtrain(:, 99:108) = log(Xtrain(:, 99:108) + 1);
 %% normalize data
 
 % normalize train data
