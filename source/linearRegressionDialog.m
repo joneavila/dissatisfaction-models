@@ -12,13 +12,13 @@ clear numDifference
 clear Xcompare Xtrain yCompare yTrain
 
 %% predict on the train set and compare set to build their feature sets
-trackListTrain = gettracklist('train-dialog.tl');
-trackListCompare = gettracklist('dev-dialog.tl');
-% trackListCompare = gettracklist('test-dialog.tl');
+tracklistTrain = gettracklist('tracklists-dialog\train.tl');
+tracklistCompare = gettracklist('tracklists-dialog\dev.tl');
+% tracklistCompare = gettracklist('tracklists-dialog\test.tl');
 
-[XsummaryTrain, yActualTrain] = getSummaryXy(trackListTrain, 'train', ...
+[XsummaryTrain, yActualTrain] = getSummaryXy(tracklistTrain, 'train', ...
     normalizeCenteringValues, normalizeScalingValues);
-[XsummaryCompare, yActualCompare] = getSummaryXy(trackListCompare, 'compare', ...
+[XsummaryCompare, yActualCompare] = getSummaryXy(tracklistCompare, 'compare', ...
     normalizeCenteringValues, normalizeScalingValues);
 
 %% plot histograms for summary features
@@ -48,9 +48,11 @@ featureNames = ["ratio" "min" "max" "average" "range" "std"];
 nBins = 32;
 barColorN = '#1e88e5'; 
 barColorD = '#fb8c00';
-imageDir = append(pwd, "\src\histograms-summary-features\");
 
-mkdir(imageDir);
+imageDir = append(pwd, "\histograms-summary-features\");
+if ~exist(imageDir, 'dir')
+    mkdir(imageDir)
+end
 
 
 for featureNum = 1:length(featureNames)
@@ -152,7 +154,7 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
     % load the linear regressor saved in linearRegressionFrame.m
     load('linearRegressor.mat', 'linearRegressor');
 
-    featureSpec = getfeaturespec('.\mono-extended.fss');
+    featureSpec = getfeaturespec('.\source\mono.fss');
     nTracks = size(tracklist, 2);
 
     numSummaryFeatures = 5;
@@ -168,8 +170,7 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
         % get the annotation path, assuming they share the same name
         [~, name, ~] = fileparts(filename);
         annFilename = append(name, ".txt");
-        annotator = 'ad';
-        annotationPath = append('annotations\', annotator, '-annotations\', annFilename);
+        annotationPath = append('annotations\', annFilename);
         
         % skip this dialog if the annotation file does not exist
         if ~exist(annotationPath, 'file')
@@ -252,28 +253,28 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
         Xsummary(trackNum, 5) = range(dialogPred);
         Xsummary(trackNum, 6) = std(dialogPred);
         
-%         % TODO update to overlay annotations
-%         % plot dialogPred over time
-%         plotDirectory = append(pwd, "\src\time-pred-plots-", tracklistName, "\");
-%         if ~exist(plotDirectory, 'dir')
-%             mkdir(plotDirectory)
-%         end
-%         
-%         figWidth = 1920;
-%         figHeight = 1080;
-%         fig = figure('visible', 'off', 'position', ...
-%             [0, 0, figWidth, figHeight]);
-%         x = (1:length(dialogPred)) * milliseconds(10);
-%         y = dialogPred;
-%         plot(x, y);
-%         % hold on
-%         % plot(x, dialogActual);
-%         % legend('dialogPred','dialogActual')
-%         title(sprintf('%s\n', filename));
-%         xlabel('time (seconds)');
-%         ylabel('dissatisfaction');
-%         ylim([-0.25 1.25]) % fix the y-axis range
-%         exportgraphics(gca, sprintf('%s/%s.jpg', plotDirectory, name));
+        % TODO update to overlay annotations
+        % plot dialogPred over time
+        plotDirectory = append(pwd, "\time-pred-plots-", tracklistName, "\");
+        if ~exist(plotDirectory, 'dir')
+            mkdir(plotDirectory)
+        end
+        
+        figWidth = 1920;
+        figHeight = 1080;
+        fig = figure('visible', 'off', 'position', ...
+            [0, 0, figWidth, figHeight]);
+        x = (1:length(dialogPred)) * milliseconds(10);
+        y = dialogPred;
+        plot(x, y);
+        % hold on
+        % plot(x, dialogActual);
+        % legend('dialogPred','dialogActual')
+        title(sprintf('%s\n', filename));
+        xlabel('time (seconds)');
+        ylabel('dissatisfaction');
+        ylim([-0.25 1.25]) % fix the y-axis range
+        exportgraphics(gca, sprintf('%s/%s.jpg', plotDirectory, name));
         
         fprintf('done\n');
         
