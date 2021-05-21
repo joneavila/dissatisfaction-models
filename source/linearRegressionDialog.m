@@ -1,25 +1,19 @@
 % logisticRegressionDialog.m
-%% prepare the data used in the frame-level model
-% to get 'normalizeCenteringValues' and 'normalizeScalingValues' to
-% normalize the dialog-level data using the same values
-prepareData;
-
-% clear unecessary variables left over from the prepareData script
-clear frameTimesCompare frameTimesTrain
-clear frameTrackNumsCompare frameTrackNumsTrain
-clear frameUtterNumsCompare frameUtterNumsTrain
-clear numDifference
-clear Xcompare Xtrain yCompare yTrain
 
 %% predict on the train set and compare set to build their feature sets
+
+prepareData;
+
 tracklistTrain = gettracklist('tracklists-dialog\train.tl');
 tracklistCompare = gettracklist('tracklists-dialog\dev.tl');
 % tracklistCompare = gettracklist('tracklists-dialog\test.tl');
 
-[XsummaryTrain, yActualTrain] = getSummaryXy(tracklistTrain, 'train', ...
-    normalizeCenteringValues, normalizeScalingValues);
-[XsummaryCompare, yActualCompare] = getSummaryXy(tracklistCompare, 'compare', ...
-    normalizeCenteringValues, normalizeScalingValues);
+firstRegressor = fitlm(XtrainDialog, yTrainDialog);
+
+[XsummaryTrain, yActualTrain] = getSummaryXy(tracklistTrain, ...
+    centeringValuesDialog, scalingValuesDialog, firstRegressor);
+[XsummaryCompare, yActualCompare] = getSummaryXy(tracklistCompare, ...
+    centeringValuesDialog, scalingValuesDialog, firstRegressor);
 
 %% plot histograms for summary features
 % for neutral versus dissatisfied dialogs in combined train and compare set
@@ -120,7 +114,7 @@ sz = [thresholdNum, length(varNames)];
 resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
     'VariableNames', varNames);
 
-fprintf('beta=%.2f min(yPred)=%.2f max(yPred)=%2.f mean(yPred)=%.2f\n', ...
+fprintf('beta=%.2f min(yPred)=%.2f max(yPred)=%.2f mean(yPred)=%.2f\n', ...
     beta, min(yPred), max(yPred), mean(yPred));
 
 for thresholdNum = 1:length(thresholds)
@@ -136,23 +130,20 @@ for thresholdNum = 1:length(thresholds)
 end
 
 % TODO add MSE in print here
-[bestScoreValue, bestScoreIdx] = max(resultTable{:, 3});
+[bestScore, bestScoreIdx] = max(resultTable{:, 3});
 bestScoreThreshold = resultTable{bestScoreIdx, 1};
-fprintf('bestScoreThreshold=%.3f, bestScoreValue=%.3f\n', ...
-    bestScoreThreshold, bestScoreValue);
+fprintf('bestScore=%.3f, bestScoreThreshold=%.3f, mse=%.2f\n', bestScore, ...
+    bestScoreThreshold, secondMse);
 
 yBaselineAfterThreshold = yBaseline >= bestScoreThreshold;
 baselineMse = mse(yBaselineAfterThreshold, yActualCompare');
 [baselineScore, baselinePrecision, baselineRecall] = ...
     fScore(yActualCompare, yBaselineAfterThreshold, 1, 0, beta);
-fprintf('baselineMse=%.2f, baselineScore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f\n', ...
-    baselineMse, baselineScore, baselinePrecision, baselineRecall);
+fprintf('baselineScore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f, baselineMse=%.2f\n', ...
+    baselineScore, baselinePrecision, baselineRecall, baselineMse);
 
-function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
-    normalizeCenteringValues, normalizeScalingValues)
-
-    % load the linear regressor saved in linearRegressionFrame.m
-    load('linearRegressor.mat', 'linearRegressor');
+function [Xsummary, yActual] = getSummaryXy(tracklist, ...
+    normalizeCenteringValues, normalizeScalingValues, firstRegressor)
 
     featureSpec = getfeaturespec('.\source\mono.fss');
     nTracks = size(tracklist, 2);
@@ -160,6 +151,11 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
     numSummaryFeatures = 5;
     Xsummary = zeros([nTracks numSummaryFeatures]);
     yActual = zeros(size(tracklist));
+    
+    dataDir = append(pwd, '\data\dialog-level\');
+    if ~exist(dataDir, 'dir')
+        mkdir(dataDir)
+    end
 
     for trackNum = 1:nTracks
         
@@ -185,8 +181,7 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
         
         trackSpec = makeTrackspec(customerSide, filename, '.\calls\');
         [~, name, ~] = fileparts(filename);
-        saveFilename = append(pwd, '\data\dialog-level-linear\', ...
-            name, '.mat');
+        saveFilename = append(dataDir, name, '.mat');
         try
             monster = load(saveFilename);
             monster = monster.monster;
@@ -234,7 +229,7 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
 
         % predict on X using the linear regressor
         % take the average of the predictions and make it the final one
-        dialogPred = predict(linearRegressor, monster);
+        dialogPred = predict(firstRegressor, monster);
 
         % feature 1 - number of frames in dialogPred above the best 
         % threshold (the threshold with best F_0.25 score, found in 
@@ -255,7 +250,7 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, tracklistName, ...
         
         % TODO update to overlay annotations
         % plot dialogPred over time
-        plotDirectory = append(pwd, "\time-pred-plots-", tracklistName, "\");
+        plotDirectory = append(pwd, "\time-pred-plots\");
         if ~exist(plotDirectory, 'dir')
             mkdir(plotDirectory)
         end
