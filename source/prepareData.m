@@ -1,6 +1,9 @@
 % prepareData.m
+% TODO add code to compute the test data
+% TODO add code to normalize test test
 
 featureSpec = getfeaturespec('.\source\mono.fss');
+
 dataDir = append(pwd, '\data');
 if ~exist(dataDir, 'dir')
     mkdir(dataDir)
@@ -8,9 +11,9 @@ end
 
 %% load precomputed frame-level data if found, else compute it
 disp('loading frame-level data');
-trackListTrainFrame = gettracklist('tracklists-frame\train.tl');
-trackListDevFrame = gettracklist('tracklists-frame\dev.tl');
-trackListTestFrame = gettracklist('tracklists-frame\test.tl');
+tracklistTrainFrame = gettracklist('tracklists-frame\train.tl');
+tracklistDevFrame = gettracklist('tracklists-frame\dev.tl');
+tracklistTestFrame = gettracklist('tracklists-frame\test.tl');
 
 % load precomupted train data, else compute it and save it for future runs
 filenamesTrainFrame = ["timesTrainFrame" "trackNumsTrainFrame" ...
@@ -27,7 +30,7 @@ for i = 1:length(filenamesTrainFrame)
 end
 if ~loadedAll
     [XtrainFrame, yTrainFrame, trackNumsTrainFrame, timesTrainFrame, ...
-        utterNumsTrainFrame] = getXYfromTrackList(trackListTrainFrame, ...
+        utterNumsTrainFrame] = getXYfromTrackList(tracklistTrainFrame, ...
         featureSpec);
     for i = 1:length(filenamesTrainFrame)
         saveFilename = append(dataDir, '\', filenamesTrainFrame(i), '.mat');
@@ -50,16 +53,13 @@ for i = 1:length(filenamesDevFrame)
 end
 if ~loadedAll
     [XdevFrame, yDevFrame, trackNumsDevFrame, timesDevFrame, ...
-        utterNumsDevFrame] = getXYfromTrackList(trackListDevFrame, ...
+        utterNumsDevFrame] = getXYfromTrackList(tracklistDevFrame, ...
         featureSpec);
     for i = 1:length(filenamesDevFrame)
         saveFilename = append(dataDir, '\', filenamesDevFrame(i), '.mat');
         save(saveFilename, filenamesDevFrame(i));
     end
 end
-
-% TODO add code to compute the test data
-
 
 %% drop neutral (or dissatisfied) frames in the frame-level train data to balance it
 rng(20210419); % set seed for reproducibility
@@ -95,11 +95,10 @@ end
 XdevFrame = normalize(XdevFrame, 'center', centeringValuesFrame, ...
     'scale', scalingValuesFrame);
 
-% TODO add code to normalize test test
-
 %% load precomputed dialog-level train data if found, else compute it
 disp('loading dialog-level data');
-trackListTrainDialog = gettracklist('tracklists-dialog\train.tl');
+tracklistTrainDialog = gettracklist('tracklists-dialog\train.tl');
+tracklistDevDialog = gettracklist('tracklists-dialog\dev.tl');
 
 % load precomupted train data, else compute it and save it for future runs
 filenamesTrainDialog = ["timesTrainDialog" "trackNumsTrainDialog" ...
@@ -116,13 +115,36 @@ for i = 1:length(filenamesTrainDialog)
 end
 if ~loadedAll
     [XtrainDialog, yTrainDialog, trackNumsTrainDialog, timesTrainDialog, ...
-        utterNumsTrainDialog] = getXYfromTrackList(trackListTrainDialog, ...
+        utterNumsTrainDialog] = getXYfromTrackList(tracklistTrainDialog, ...
         featureSpec);
     for i = 1:length(filenamesTrainDialog)
         saveFilename = append(dataDir, '\', filenamesTrainDialog(i), '.mat');
         save(saveFilename, filenamesTrainDialog(i));
     end
 end
+
+% % load precomupted dev data, else compute it and save it for future runs
+% filenamesDevDialog = ["timesDevDialog" "trackNumsDevDialog" ...
+%     "utterNumsDevDialog" "XdevDialog" "yDevDialog"];
+% loadedAll = true;
+% for i = 1:length(filenamesDevDialog)
+%     saveFilename = append(dataDir, '\', filenamesDevDialog(i), '.mat');
+%     try
+%         load(saveFilename);
+%     catch
+%         loadedAll = false;
+%         break
+%     end
+% end
+% if ~loadedAll
+%     [XdevDialog, yDevDialog, trackNumsDevDialog, timesDevDialog, ...
+%         utterNumsDevDialog] = getXYfromTrackList(tracklistDevDialog, ...
+%         featureSpec);
+%     for i = 1:length(filenamesDevDialog)
+%         saveFilename = append(dataDir, '\', filenamesDevDialog(i), '.mat');
+%         save(saveFilename, filenamesDevDialog(i));
+%     end
+% end
 
 %% normalize dialog-level data
 % just to get the centering values and scaling values
