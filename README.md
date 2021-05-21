@@ -1,6 +1,7 @@
 # Detecting dissatisfaction in spoken dialog
 
 [About the project.]
+
 ## Set up
 
 1. Clone this repo or download it as a ZIP and extract.
@@ -15,22 +16,26 @@
    Path.** Right-click the folder in the Current Folder window or use the
    [addpath](https://www.mathworks.com/help/matlab/ref/addpath.html) function.
 
-## Notes
+## Annotations
 
-- **As of 2021-05-20 the corpus has not been fully annotated so results are not final.**
-- From the corpus, customer utterances were annotated for dissatisfaction. See [annotations](annotations). The labels `n` and `nn` are read as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class, dissatisfied), and all other labels are ignored. See [annotation-guide.txt](annotation-guide.txt).
+From the corpus, customer utterances were annotated for dissatisfaction. See [annotations](annotations). The labels `n` and `nn` are read as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class, dissatisfied), and all other labels are ignored. See [annotation-guide.txt](annotation-guide.txt).
 
 ## linearRegressionDialog.m
 
-A dialog-level linear regression based model. For train, dev, and test sets, see [source/tracklists-dialog](source/tracklists-dialog). The first regressor is trained using the original feature set in [mono.fss](mono.fss). The second regressor is trained on summary features based on the frame predictions of the first regressor. For each dialog, the summary features are: (1) the fraction of frames above a *dissatisfaction threshold*; (2) the minimum dissatisfaction value; (3) the maximum dissatisfaction value; (4) the mean dissatisfaction value;
-(5) the range of the dissatisfaction values; and (6) the standard deviation of the dissatisfaction values.
+A dialog-level linear regression model.
+
+The first regressor is trained using the feature set specified in [mono.fss](mono.fss). The second regressor is trained using features based on the frame predictions of the first regressor. For each dialog, the summary features are: (1) the fraction of frames above a *dissatisfaction threshold*; (2) its minimum dissatisfaction value; (3) its maximum dissatisfaction value; (4) its mean dissatisfaction value;
+(5) the range of its dissatisfaction values; and (6) the standard deviation of its dissatisfaction values.
+
+For training, validation, and test sets, see [source/tracklists-dialog](source/tracklists-dialog).
 
 The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the dev set:
 
-```none
-beta=0.25 min(yPred)=0.34 max(yPred)=32.15 mean(yPred)=2.66
-bestScore=0.452, bestScoreThreshold=0.367, mse=58.28
-baselineScore=0.38, baselinePrecision=0.37, baselineRecall=1.00, baselineMse=0.63
+```
+beta=0.25, min(yPred)=-32.24, max(yPred)=10.93, mean(yPred)=-0.27
+dissThreshold=0.327
+regressorFscore=0.43, regressorPrecision=0.41, regressorRecall=1.00, regressorMSE=65.17
+baselineFscore=0.38, baselinePrecision=0.37, baselineRecall=1.00, baselineMSE=0.63
 ```
 
 ## linearRegressionFrame.m
@@ -44,41 +49,37 @@ The learned coefficients are printed in descending order:
 ```none
 Coefficients in descending order with format:
 coefficient number, value, abbreviation
-  1 | 0.243638 | se vo -3200 -1600
- 14 | 0.226075 | se vo  +400  +800
- 29 | 0.174070 | se cr  +400  +800
- 15 | 0.140129 | se vo  +800  +1600
- 30 | 0.138245 | se cr  +800  +1600
+ 16 | 0.160004 | se vo  +1600  +3200
+ 78 | 0.151007 | se wp  +800  +1600
+ 59 | 0.115827 | se np -1600 -800
+  1 | 0.110473 | se vo -3200 -1600
+ 14 | 0.107677 | se vo  +400  +800
 ...
- 76 | -0.108236 | se wp  +300  +400
-108 | -0.124224 | se pd  +800  +1600
-  2 | -0.136769 | se vo -1600 -800
- 67 | -0.138266 | se np  +400  +800
- 77 | -0.170379 | se wp  +400  +800
+ 57 | -0.071638 | se th  +400  +800
+ 44 | -0.078300 | se tl  +800  +1600
+ 30 | -0.082371 | se cr  +800  +1600
+108 | -0.095654 | se pd  +800  +1600
+  2 | -0.227057 | se vo -1600 -800
 ```
 
 The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the dev set:
 
 ```none
-beta=0.25, bestThreshold=-1.157, bestLinearFscore=0.36, baselineFscoreAtBestThreshold=0.36
-```
-
-```none
-Regressor MAE = 0.762806
-Baseline MAE = 0.649257
-Linear regressor MSE = 0.866716
-Baseline MSE = 0.649257
-Regressor R-squared = 0.438322
+regressorRsquared=0.28
+beta=0.25, dissThreshold=1.115
+regressorFscore=0.38, regressorMSE=0.37
+baselineFscore=0.36, baselineMSE=0.66
 ```
 
 ## linearRegressionUtterance.m
 
-Predict on utterances using the linear regressor's frame-level
-predictions. For each utterance in the compare set (dev or test), predicts the mean of the
-predictions on the frames belonging to that utterance. 
+An utterance-level linear regression model. For each utterance, this model predicts the mean, predicted dissatisfaction values for the frames in the utterance.
 
 The baseline always predicts a value of 1 for perfectly dissatisfied. Results using the dev set:
 
 ```none
-[UTTERANCE-LEVEL RESULTS]
+beta=0.25, min(yPred)=-0.00, max(yPred)=0.83, mean(yPred)=0.44
+dissThreshold=0.800
+regressorFscore=0.71, regressorPrecision=1.00, regressorRecall=0.12, regressorMSE=0.26
+baselineFscore=0.25, baselinePrecision=0.24, baselineRecall=1.00, baselineMSE=0.76
 ```
