@@ -1,69 +1,50 @@
 % utteranceLevel.m 
-% Predict utterances using linear regressor's frame-level predictions. For 
-% each utterance in the compare set, this model predicts the mean of the 
-% predictions on the frames in that utterance. The baseline predicts the 
-% most common annotation for all frames in the train set.
 
-%% prepare the data 
-useTestSet = true;
-
-trackListTrain = gettracklist('.\frame-level\train.tl');
-trackListDev = gettracklist('.\frame-level\dev.tl');
-trackListTest = gettracklist('.\frame-level\test.tl');
-
-featureSpec = getfeaturespec('.\mono.fss');
-
-useAllAnnotators = false;
-
-% [Xtrain, yTrain, frameTrackNumsTrain, frameTimesTrain, frameUtterancesTrain] = ...
-%     getXYfromTrackList(trackListTrain, featureSpec, useAllAnnotators);
-% [Xdev, yDev, frameTrackNumsDev, frameTimesDev, frameUtterancesDev] = ...
-%     getXYfromTrackList(trackListDev, featureSpec, useAllAnnotators);
-% [Xtest, yTest, frameTrackNumsTest, frameTimesTest, frameUtterancesTest] = ...
-%     getXYfromTrackList(trackListTest, featureSpec, useAllAnnotators);
-
-if useTestSet
-    Xcompare = Xtest;
-    yCompare = yTest;
-    frameTrackNumsCompare = frameTrackNumsTest;
-    frameTimesCompare = frameTimesTest;
-    frameUtterancesCompare = frameUtterancesTest;
-    trackListCompare = trackListTest;
-else
-    Xcompare = Xdev;
-    yCompare = yDev;
-    frameTrackNumsCompare = frameTrackNumsDev;
-    frameTimesCompare = frameTimesDev;
-    frameUtterancesCompare = frameUtterancesDev;
-    trackListCompare = trackListDev;
-end
-
-%% train
-model = fitlm(Xtrain, yTrain);
+%% train regressor
+prepareData;
+regressor = fitlm(XtrainFrame, yTrainFrame);
 
 %% predict on each utterance in the compare set
+tracklistCompare = tracklistDevFrame;
 yPred = [];
 yActual = [];
 
-nTracks = size(trackListCompare, 2);
+nTracks = size(tracklistCompare, 2);
 for trackNum = 1:nTracks
     
-    track = trackListCompare{trackNum};
-    fprintf("predicting on %s\n", track.filename)
+    track = tracklistCompare{trackNum};
+    fprintf('[%d/%d]predicting on %s\n', trackNum, nTracks, ...
+        track.filename)
     
-    % get the annotation filename from the dialog filename, assuming
-    % they have the same name
+    % get the annotation table, assuming dilaog and annotation files share
+    % the same name
     [~, name, ~] = fileparts(track.filename);
-    annotationFilename = append(name, ".txt");
+    annotationFilename = append(name, '.txt');
+    annotationPathRelative = append('annotations\', annotationFilename);
+    useFilter = true;
+    annotationTable = readElanAnnotation(annotationPathRelative, useFilter);
     
-    % get the annotation table set up (just using one annotator here)
-    annotationPathRelative = append('annotations\ja-annotations\', annotationFilename);
-    annotationTable = readElanAnnotation(annotationPathRelative, true);
-    
-    % get the monster
+    % load the monster, else compute it and save it for future runs
+    dataDir = append(pwd, '\data\monsters\');
+    if ~exist(dataDir, 'dir')
+        mkdir(dataDir)
+    end
     customerSide = 'l';
-    trackSpec = makeTrackspec(customerSide, track.filename, track.directory);
-    [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+    trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
+    [~, name, ~] = fileparts(track.filename);
+    saveFilename = append(dataDir, name, '.mat');
+    try
+        monster = load(saveFilename);
+        monster = monster.monster;
+    catch 
+        [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+        save(saveFilename, 'monster');
+    end
+    
+    % normalize X (monster) using the same centering values and scaling 
+    % values used to normalize the data used for training
+    monster = normalize(monster, 'center', ...
+    centeringValuesFrame, 'scale', scalingValuesFrame);
     
     % for each utterance (row in annotation table) let the regressor 
     % predict on each frame of the utterance then make the average of 
@@ -75,7 +56,7 @@ for trackNum = 1:nTracks
         frameStart = round(milliseconds(row.startTime) / 10);
         frameEnd = round(milliseconds(row.endTime) / 10);
         utterance = monster(frameStart:frameEnd, :);
-        utterancePredictions = predict(model, utterance);
+        utterancePredictions = predict(regressor, utterance);
         utterancePred(rowNum) = mean(utterancePredictions);
     end
     
@@ -93,55 +74,52 @@ end
 % this baseline always predicts 1 for perfectly dissatisfied and should be
 % compared with using precision
 yBaseline = ones(size(yActual));
-%% print f1 score and more for different thresholds
-thresholdMin = -0.25;
-thresholdMax = 1.1;
-thresholdStep = 0.05;
+%% try different dissatisfaction thresholds to find the best F-score
+% when beta is 0.25
+mse = @(actual, pred) (mean((actual - pred) .^ 2));
 
-fprintf('min(yPred)=%.3f, max(yPred)=%.3f\n', min(yPred), max(yPred));
-fprintf('thresholdMin=%.2f, thresholdMax=%.2f, thresholdStep=%.2f\n', ...
-    thresholdMin, thresholdMax, thresholdStep);
+thresholdMin = 0;
+thresholdMax = 1;
+thresholdNum = 500;
+thresholdStep = (thresholdMax - thresholdMin) / (thresholdNum - 1);
+thresholds = thresholdMin:thresholdStep:thresholdMax;
+beta = 0.25;
 
-thresholdCompare = 0.5;
-yActualLabel = arrayfun(@(x) floatToLabel(x, thresholdCompare), yActual, ...
-    'UniformOutput', false);
+varTypes = ["double", "double", "double", "double", "double"];
+varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
+sz = [thresholdNum, length(varNames)];
+resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
+    'VariableNames', varNames);
 
-nSteps = (thresholdMax - thresholdMin) / thresholdStep;
-threshold = zeros([nSteps 1]);
-precisionUtterance = zeros([nSteps 1]);
-precisionBaseline = zeros([nSteps 1]);
-recallUtterance = zeros([nSteps 1]);
-recallBaseline = zeros([nSteps 1]);
-scoreUtterance = zeros([nSteps 1]);
-scoreBaseline = zeros([nSteps 1]);
+fprintf('beta=%.2f, min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
+    beta, min(yPred), max(yPred), mean(yPred));
 
-thresholdSel = thresholdMin;
-for i = 1:nSteps
-    thresholdSel = round(thresholdSel, 2);
-    yPredLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), yPred, ...
-        'UniformOutput', false);
-    yBaselineLabel = arrayfun(@(x) floatToLabel(x, thresholdSel), ...
-        yBaseline, 'UniformOutput', false);
-    [scoLinear, precLinear, recLinear] = fScore(yActualLabel, ...
-        yPredLabel, 'doomed', 'successful');
-    [scoBaseline, precBaseline, recBaseline] = fScore(yActualLabel, ...
-        yBaselineLabel, 'doomed', 'successful');
-    threshold(i) = thresholdSel;
-    precisionUtterance(i) = precLinear;
-    precisionBaseline(i) = precBaseline;
-    
-    recallUtterance(i) = recLinear;
-    recallBaseline(i) = recBaseline;
-    
-    scoreUtterance(i) = scoLinear;
-    scoreBaseline(i) = scoBaseline;
-    
-    thresholdSel = thresholdSel + thresholdStep;
+for thresholdNum = 1:length(thresholds)
+    threshold = thresholds(thresholdNum);
+    yPredAfterThreshold = yPred >= threshold;
+    [score, precision, recall] = fScore(yActual, ...
+        yPredAfterThreshold, 1, 0, beta);
+    resultTable{thresholdNum, 1} = threshold;
+    resultTable{thresholdNum, 2} = mse(yPredAfterThreshold, yActual);
+    resultTable{thresholdNum, 3} = score;
+    resultTable{thresholdNum, 4} = precision;
+    resultTable{thresholdNum, 5} = recall;
 end
-disp(table(threshold, precisionUtterance, precisionBaseline, recallUtterance, ...
-    recallBaseline, scoreUtterance, scoreBaseline));
-%%
-% mae = @(A, B) (mean(abs(A - B)));
-% disp('Utterance-level:');
-% fprintf('Utterance MAE = %f\n', mae(yUtteranceActual, yUtterancePred));
-% fprintf('Baseline MAE = %f\n', mae(yUtteranceActual, yUtteranceBaseline));
+
+% print regressor stats
+[regressorFscore, scoreIdx] = max(resultTable{:, 3});
+bestThreshold = resultTable{scoreIdx, 1};
+fprintf('dissThreshold=%.3f\n', bestThreshold);
+regressorPrecision = resultTable{scoreIdx, 4};
+regressorRecall = resultTable{scoreIdx, 5};
+regressorMSE = mse(yPred, yActual);
+fprintf('regressorFscore=%.2f, regressorPrecision=%.2f, regressorRecall=%.2f, regressorMSE=%.2f\n', ...
+    regressorFscore, regressorPrecision, regressorRecall, regressorMSE);
+
+% print baseline stats
+yBaselineAfterThreshold = yBaseline >= bestThreshold;
+baselineMSE = mse(yBaselineAfterThreshold, yActual);
+[baselineFscore, baselinePrecision, baselineRecall] = ...
+    fScore(yActual, yBaselineAfterThreshold, 1, 0, beta);
+fprintf('baselineFscore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f, baselineMSE=%.2f\n', ...
+    baselineFscore, baselinePrecision, baselineRecall, baselineMSE);
