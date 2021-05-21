@@ -1,244 +1,84 @@
 # Detecting dissatisfaction in spoken dialog
 
+[About the project.]
 ## Set up
 
 1. Clone this repo or download it as a ZIP and extract.
-1. Download The UTEP Corpus of Dissatisfaction in Spoken Dialog at
-   <https://github.com/joneavila/utep-dissatisfaction-corpus>. Place the `calls`
+1. Download [The UTEP Corpus of Dissatisfaction in Spoken Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus). Place the `calls`
    folder and `call-log.xlsx` in the root of this project.
-1. Download Midlevel Prosodic Features Toolkit at
-   <https://github.com/nigelgward/midlevel>. Place the `midlevel-master` folder
+1. Download [Midlevel Prosodic Features Toolkit](https://github.com/nigelgward/midlevel). Place the `midlevel-master` folder
    in the root of this project.
 1. Open this project
-(`dissatisfaction-models` folder) in MATLAB and add the folder and its subfolders to
-   Path. Right-click the folder in the Current Folder window or use the
+(the `dissatisfaction-models` folder) in MATLAB.
+1. Install MATLAB's [Signal Processing Toolbox](https://www.mathworks.com/products/signal.html).
+1. **Add the project folder and its subfolders to
+   Path.** Right-click the folder in the Current Folder window or use the
    [addpath](https://www.mathworks.com/help/matlab/ref/addpath.html) function.
 
 ## Notes
 
-**Results for 'ja' annotations only. Results are for dev set unless otherwise stated.**
+- **As of 2021-05-20 the corpus has not been fully annotated so results are not final.**
+- From the corpus, customer utterances were annotated for dissatisfaction. See [annotations](annotations). The labels `n` and `nn` are read as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class, dissatisfied), and all other labels are ignored. See [annotation-guide.txt](annotation-guide.txt).
 
-You will need the Signal Processing Toolbox and the other toolbox I forgot the name of but is in the CADQ documentation.
+## linearRegressionDialog.m
 
-Maybe a note to add the corpus README: the min length is 41s, max length is 543s, and mean is 213s.
+A dialog-level linear regression based model. For train, dev, and test sets, see [source/tracklists-dialog](source/tracklists-dialog). The first regressor is trained using the original feature set in [mono.fss](mono.fss). The second regressor is trained on summary features based on the frame predictions of the first regressor. For each dialog, the summary features are: (1) the fraction of frames above a *dissatisfaction threshold*; (2) the minimum dissatisfaction value; (3) the maximum dissatisfaction value; (4) the mean dissatisfaction value;
+(5) the range of the dissatisfaction values; and (6) the standard deviation of the dissatisfaction values.
 
-We took the corpus and annotated customer utterances. See [annotations](annotations). To predict dissatisfaction
-on a scale from 0 to 1 where 0 is neutral (negative class) and 1 is dissatisfied
-(positive class), `n` and `nn` are read as 0, `d` and `dd` are read as 1, and
-all other labels are ignored. See [annotations/annotation-guide.txt](annotations/annotation-guide.txt).
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the dev set:
 
-Features used are original mono.fss with a couple added `cp` for same windows. See
-[mono.fss](mono.fss).
+```none
+beta=0.25 min(yPred)=0.34 max(yPred)=32.15 mean(yPred)=2.66
+bestScore=0.452, bestScoreThreshold=0.367, mse=58.28
+baselineScore=0.38, baselinePrecision=0.37, baselineRecall=1.00, baselineMse=0.63
+```
 
-The code was written in MATLAB and uses MATLAB's built-in functions for
-performing linear regression, logistic regression, and k-nearest neighbor
-classification.
+## linearRegressionFrame.m
 
-## Frame-level model (linear regression)
-
-The frame-level models share a train, dev, and test set (see [frame-level/train.tl](frame-level/train.tl),
-[frame-level/dev.tl](frame-level/dev.tl), and [frame-level/test.tl](frame-level/test.tl)). Each set is 6
+A frame-level linear regression model. For train, dev, and test sets, see [source/tracklists-frame](source/tracklists-frame). Each set is 6
 dialogs, half labeled as neutral and half labeled as dissatisfied on the
-dialog-level. The dissatisfied dialogs still have many neutral utterances so the
-data is not balanced. The tables below use results from [corpusStats.m](corpusStats.m).
+dialog level. The dissatisfied dialogs typically have more neutral frames compared to dissatisfied frames so the training data is balanced in code.
 
-set | `n` or `nn` frames | `d` and `dd` frames
----   | --- | ---
-train | 15894 | 15455
-dev   | 24023 |  8306
-test  | 20458 | 11401
+The learned coefficients are printed in descending order:
 
-set   | num neutral utter   | num dissatisfied utter
----   | ---                 | ---
-train | 35 (`n`=35, `nn`=0) | 17 (`d`=15, `dd`=2)
-dev   | 45 (`n`=42, `nn`=3) | 14 (`d`=12, `dd`=2)
-test  | 28 (`n`=27, `nn`=1) | 13 (`d`=11, `dd`=2)
-
-The baseline always predicts 1 for perfectly dissatisfied. Results on the test set,
-
-```NONE
-min(yPred)=-0.370, max(yPred)=1.082
-thresholdMin=-0.25, thresholdMax=1.10, thresholdStep=0.05
-    threshold    precisionLinear    precisionBaseline    recallLinear    recallBaseline    scoreLinear    scoreBaseline
-    _________    _______________    _________________    ____________    ______________    ___________    _____________
-
-      -0.25          0.35715             0.35786            0.99518            1              0.52565        0.52709   
-       -0.2          0.35637             0.35786            0.99035            1              0.52414        0.52709   
-      -0.15          0.35705             0.35786            0.98869            1              0.52463        0.52709   
-       -0.1          0.35707             0.35786            0.98237            1              0.52377        0.52709   
-      -0.05          0.35753             0.35786            0.97255            1              0.52285        0.52709   
-          0          0.35645             0.35786            0.95114            1              0.51857        0.52709   
-       0.05          0.35468             0.35786            0.91632            1              0.51141        0.52709   
-        0.1          0.35716             0.35786             0.8872            1              0.50929        0.52709   
-       0.15          0.36362             0.35786            0.85589            1               0.5104        0.52709   
-        0.2          0.37118             0.35786            0.80835            1              0.50875        0.52709   
-       0.25          0.38731             0.35786            0.75985            1              0.51309        0.52709   
-        0.3          0.40919             0.35786            0.70845            1              0.51875        0.52709   
-       0.35          0.43307             0.35786            0.64187            1              0.51719        0.52709   
-        0.4          0.46776             0.35786            0.56688            1              0.51257        0.52709   
-       0.45          0.51799             0.35786            0.49127            1              0.50428        0.52709   
-        0.5          0.57667             0.35786            0.42286            1              0.48793        0.52709   
-       0.55          0.63784             0.35786            0.34865            1              0.45086        0.52709   
-        0.6          0.70028             0.35786            0.28199            1              0.40208        0.52709   
-       0.65          0.75994             0.35786             0.2113            1              0.33066        0.52709   
-        0.7          0.80437             0.35786            0.14534            1              0.24619        0.52709   
-       0.75          0.82166             0.35786           0.090518            1              0.16307        0.52709   
-        0.8          0.87517             0.35786           0.055346            1              0.10411        0.52709   
-       0.85          0.94853             0.35786           0.033944            1             0.065543        0.52709   
-        0.9           0.9951             0.35786           0.017805            1             0.034985        0.52709   
-       0.95                1             0.35786          0.0085957            1             0.017045        0.52709   
-          1                1                 NaN          0.0040347            0             0.008037              0   
-       1.05                1                 NaN          0.0013157            0            0.0026279              0
-```
-
-The learned coefficients are saved to
-[frame-level/coefficients.txt](frame-level/coefficients.txt). Here is a preview,
-
-```NONE
+```none
 Coefficients in descending order with format:
-coefficient, value, abbreviation
-78 | 0.101464 | se wp  +800  +1600
-17 | 0.085342 | se cr -1600 -800
-68 | 0.081703 | se np  +800  +1600
-16 | 0.078909 | se vo  +1600  +3200
-69 | 0.069533 | se wp -1600 -800
+coefficient number, value, abbreviation
+  1 | 0.243638 | se vo -3200 -1600
+ 14 | 0.226075 | se vo  +400  +800
+ 29 | 0.174070 | se cr  +400  +800
+ 15 | 0.140129 | se vo  +800  +1600
+ 30 | 0.138245 | se cr  +800  +1600
 ...
-14 | -0.055618 | se vo  +400  +800
-58 | -0.071541 | se th  +800  +1600
- 3 | -0.081373 | se vo -800 -400
-15 | -0.095862 | se vo  +800  +1600
- 2 | -0.135657 | se vo -1600 -800
-
+ 76 | -0.108236 | se wp  +300  +400
+108 | -0.124224 | se pd  +800  +1600
+  2 | -0.136769 | se vo -1600 -800
+ 67 | -0.138266 | se np  +400  +800
+ 77 | -0.170379 | se wp  +400  +800
 ```
 
-A histogram of the regressor's output shows frames that are predicted as 1 or
-above are more likely to be dissatisfied than neutral. Those predictions are
-more likely to be correct, so the threshold (used when converting floats back
-into labels) can be set to favor precision.
-![regressor output couple cp features](images/regressor-output-couple-cp.png)
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the dev set:
 
-### Failure analysis
-
-The code finds which frames in the compare set (dev set or
-test set, but using dev set for now) had the largest misclassification, or
-largest difference between `yPred` and `yCompare`. Then clips are created for
-these frames, but only if the frame has not already been included in a clip. The
-misclassification happens at the middle of the clip, i.e. the rest is included
-for context. As an example, here's the output for the second clip,
-
-```NONE
-clip14094  timeSeconds=7.06  filename=20210122-jl-5fa2e888f2ec2d41c1faf2d1-tire-y-y.wav
-      predicted=1.15  actual=0.00
+```none
+beta=0.25, bestThreshold=-1.157, bestLinearFscore=0.36, baselineFscoreAtBestThreshold=0.36
 ```
 
-Meaning frame #14094 from the compare set was misclassified, predicted as 1.15 when
-actually 0, and the frame corresponds to 7.06 seconds into
-`20210122-jl-5fa2e888f2ec2d41c1faf2d1-tire-y-y`.
+```none
+Regressor MAE = 0.762806
+Baseline MAE = 0.649257
+Linear regressor MSE = 0.866716
+Baseline MSE = 0.649257
+Regressor R-squared = 0.438322
+```
 
-The code generates two clips for each of these. The first one will be named
-`clip14094-1seconds.wav` and the second `clip14094-2seconds`. The number of clips and
-the size of the context can be adjusted.
-
-To run from MATLAB: `>> linearRegression`
-
-### Other models
-
-A k-nearest neighbor classifier with number of neighbors 5 and rest of default
-parameters.
-
-To run from MATLAB: `>> kNNframeLevel`
-
-A logistic regressor.
-
-To run from MATLAB: `>> logisticRegression`
-
-## Utterance-level model
+## linearRegressionUtterance.m
 
 Predict on utterances using the linear regressor's frame-level
 predictions. For each utterance in the compare set (dev or test), predicts the mean of the
-predictions on the frames belonging to that utterance. The baseline always predicts 1 for perfectly dissatisfied. Results using the
-test set,
+predictions on the frames belonging to that utterance. 
 
-```NONE
-min(yPred)=-0.016, max(yPred)=0.704
-thresholdMin=-0.25, thresholdMax=1.10, thresholdStep=0.05
-    threshold    precisionUtterance    precisionBaseline    recallUtterance    recallBaseline    scoreUtterance    scoreBaseline
-    _________    __________________    _________________    _______________    ______________    ______________    _____________
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results using the dev set:
 
-      -0.25           0.31707               0.31707                   1              1              0.48148           0.48148   
-       -0.2           0.31707               0.31707                   1              1              0.48148           0.48148   
-      -0.15           0.31707               0.31707                   1              1              0.48148           0.48148   
-       -0.1           0.31707               0.31707                   1              1              0.48148           0.48148   
-      -0.05           0.31707               0.31707                   1              1              0.48148           0.48148   
-          0               0.3               0.31707             0.92308              1              0.45283           0.48148   
-       0.05           0.28205               0.31707             0.84615              1              0.42308           0.48148   
-        0.1            0.2973               0.31707             0.84615              1                 0.44           0.48148   
-       0.15           0.30556               0.31707             0.84615              1              0.44898           0.48148   
-        0.2           0.32353               0.31707             0.84615              1              0.46809           0.48148   
-       0.25           0.36667               0.31707             0.84615              1              0.51163           0.48148   
-        0.3           0.41667               0.31707             0.76923              1              0.54054           0.48148   
-       0.35            0.4375               0.31707             0.53846              1              0.48276           0.48148   
-        0.4           0.57143               0.31707             0.30769              1                  0.4           0.48148   
-       0.45           0.66667               0.31707             0.30769              1              0.42105           0.48148   
-        0.5               0.8               0.31707             0.30769              1              0.44444           0.48148   
-       0.55               0.8               0.31707             0.30769              1              0.44444           0.48148   
-        0.6               0.8               0.31707             0.30769              1              0.44444           0.48148   
-       0.65                 1               0.31707            0.076923              1              0.14286           0.48148   
-        0.7                 1               0.31707            0.076923              1              0.14286           0.48148   
-       0.75               NaN               0.31707                   0              1                    0           0.48148   
-        0.8               NaN               0.31707                   0              1                    0           0.48148   
-       0.85               NaN               0.31707                   0              1                    0           0.48148   
-        0.9               NaN               0.31707                   0              1                    0           0.48148   
-       0.95               NaN               0.31707                   0              1                    0           0.48148   
-          1               NaN                   NaN                   0              0                    0                 0   
-       1.05               NaN                   NaN                   0              0                    0                 0
+```none
+[UTTERANCE-LEVEL RESULTS]
 ```
-
-To run from MATLAB: `>> utteranceLevel`
-
-## Dialog-level k-NN model
-
-A k-nearest neighbor classifier. Number of neighbors is 5 and rest of default
-parameters. X and y are downsampled so that each frame is 100ms apart. The MAE
-is **NUM** and F1 score **NUM**. The baseline predicts the majority class (neutral);
-its MAE is **NUM** and F1 score **NUM**.
-
-To run from MATLAB: `>> kNNdialogLevel`
-
-## Histograms
-
-Save a histogram for each feature in the train and dev set. Save histograms
-to `frame-level/histograms`. Here's an example,
-
-![feature-histogram-example](images/feature-histogram-example.png)
-
-The rest of the histograms are in [frame-level/histograms](frame-level/histograms). The histograms are normalized so that bar heights add to 1. `feat01` through
-`feat16` (volume) have bimodal distributions likely because quiet frames like
-those at the start and end of utterances make up the first mode and the average
-speaking volume makes up the second mode. A silent frame is more likely to be
-neutral, possibly because neutral utterances tend to be shorter and the more
-utterances the more silence is introduced at the start and end of those
-utterances. `feat17` through `feat30` (creakiness) have skewed distributions likely
-because there is little evidence for creakiness and so the distribution skews
-right. `feat69` through `feat78` (wide pitch) distributions show that frames above a
-threshold (around 0.8, depending on the window) are more likely to be
-dissatisfied, and frames below the threshold are more likely to be neutral.
-Shock might explain some wideness, for example someone saying "What? I thought
-you said..."
-
-The code also generates a histogram for the linear regressor's output on the dev
-set. (The image is above, in the linear regression section. The code should be
-separated at some point.)
-
-To run from MATLAB: `>> generateHistograms`
-
-## t-tests
-
-The first t-test is for features between neutral frames (N) and dissatisfied
-frames (D) from the
-train and dev set. Output (replace output),
-
-The second t-test is between the linear regressor's predictions for N and
-predictions D. The test result is **NUM** (rejects null hypothesis if value is 1).
-
-To run from MATLAB: `>> tTests`
