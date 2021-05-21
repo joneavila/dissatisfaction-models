@@ -2,12 +2,12 @@
 
 %% train regressor
 prepareData;
-linearRegressor = fitlm(Xtrain, yTrain);
+linearRegressor = fitlm(XtrainFrame, yTrainFrame);
 
-%% save the model to use in the dialog-level model later
-modelFilename = 'linearRegressor.mat';
-save(modelFilename, 'linearRegressor');
-fprintf('Saved trained linear regressor as %s\n', modelFilename);
+XcompareFrame = XdevFrame;
+yCompareFrame = yDevFrame;
+% XcompareFrame = XtestFrame;
+% yCompareFrame = yTestFrame;
 
 %% print out coefficient info
 coefficients = linearRegressor.Coefficients.Estimate;
@@ -23,7 +23,7 @@ for i = 1:length(coefficients)
 end
 
 %%  predict on the compare set
-yPred = predict(linearRegressor, Xcompare);
+yPred = predict(linearRegressor, XcompareFrame);
 
 % the baseline always predicts dissatisfied (1 for positive class)
 yBaseline = ones(size(yPred));
@@ -33,9 +33,13 @@ yBaseline = ones(size(yPred));
 %  beta=0.25, bestThreshold=0.555, bestLinearFscore=0.31, ...
 %  baselineFscoreAtBestThreshold=0.27
 
+% Output as of May 20, 2021:
+%  beta=0.25, bestThreshold=-1.157, bestLinearFscore=0.36, ...
+%  baselineFscoreAtBestThreshold=0.36
+
 thresholdMin = min(yPred);
 thresholdMax = max(yPred);
-thresholdNum = 500; % change this back to 500
+thresholdNum = 1000;
 thresholdStep = (thresholdMax - thresholdMin) / thresholdNum;
 
 beta = 0.25;
@@ -46,11 +50,11 @@ bestThreshold = 0;
 
 for threshold = thresholdMin:thresholdStep:thresholdMax
     yPredAfterThreshold = yPred >= threshold;
-    [scoreModel, ~, ~] = fScore(yCompare, yPredAfterThreshold, 1, 0, beta);
+    [scoreModel, ~, ~] = fScore(yCompareFrame, yPredAfterThreshold, 1, 0, beta);
     if scoreModel >= bestLinearFscore
         bestLinearFscore = scoreModel;
         bestThreshold = threshold;
-        [scoreBaseline, ~, ~] = fScore(yCompare, yBaseline, 1, 0, beta);
+        [scoreBaseline, ~, ~] = fScore(yCompareFrame, yBaseline, 1, 0, beta);
         baselineFscoreAtBestThreshold = scoreBaseline;
     end
 end
@@ -67,13 +71,20 @@ fprintf('beta=%.2f, bestThreshold=%.3f, bestLinearFscore=%.2f, baselineFscoreAtB
 %  Baseline MSE = 0.743079
 %  Regressor R-squared = 0.347917
 
+% Output as of May 20, 2021:
+%  Regressor MAE = 0.762806
+%  Baseline MAE = 0.649257
+%  Linear regressor MSE = 0.866716
+%  Baseline MSE = 0.649257
+%  Regressor R-squared = 0.438322
+
 mae = @(A, B) (mean(abs(A - B)));
-fprintf('Regressor MAE = %f\n', mae(yCompare, yPred));
-fprintf('Baseline MAE = %f\n\n', mae(yCompare, yBaseline));
+fprintf('Regressor MAE = %f\n', mae(yCompareFrame, yPred));
+fprintf('Baseline MAE = %f\n\n', mae(yCompareFrame, yBaseline));
 
 mse = @(actual, pred) (mean((actual - pred) .^ 2));
-fprintf('Linear regressor MSE = %f\n', mse(yCompare, yPred));
-fprintf('Baseline MSE = %f\n\n', mse(yCompare, yBaseline));
+fprintf('Linear regressor MSE = %f\n', mse(yCompareFrame, yPred));
+fprintf('Baseline MSE = %f\n\n', mse(yCompareFrame, yBaseline));
 
 fprintf('Regressor R-squared = %f\n', linearRegressor.Rsquared.adjusted);
 
