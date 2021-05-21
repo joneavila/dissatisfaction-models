@@ -192,8 +192,7 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
         end
 
         % normalize X (monster) using the same centering values and scaling 
-        % values used to normalize the data used for training the 
-        % frame-level model
+        % values used to normalize the data used for training
         monster = normalize(monster, 'center', ...
             normalizeCenteringValues, 'scale', normalizeScalingValues);
         
@@ -240,8 +239,8 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
         % feature 4 - average of dialogPred
         % feature 5 - range of dialogPred 
         % feature 6 - standard deviation of dialogPred
-        bestThreshold = 0.555;
-        Xsummary(trackNum, 1) = nnz(dialogPred > bestThreshold) / ...
+        DISS_THRESHOLD = 1.115; % found in linearRegressionFrame.m
+        Xsummary(trackNum, 1) = nnz(dialogPred > DISS_THRESHOLD) / ...
             length(dialogPred);
         Xsummary(trackNum, 2) = min(dialogPred);
         Xsummary(trackNum, 3) = max(dialogPred);
