@@ -69,12 +69,6 @@ fprintf('beta=%.2f, dissThreshold=%.3f\n', beta, bestThreshold);
 fprintf('regressorFscore=%.2f, regressorMSE=%.2f\n', bestFscore, regressorMSE);
 fprintf('baselineFscore=%.2f, baselineMSE=%.2f\n', baselineFscore, baselineMSE);
 
-%% print stats
-
-
-
-
-
 %% failure analysis
 
 % config
