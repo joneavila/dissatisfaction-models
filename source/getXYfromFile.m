@@ -1,5 +1,5 @@
 function [X, y, frameTimes, frameUtterances] = getXYfromFile(filename, ...
-    featureSpec, annotator)
+    featureSpec)
 % GETXYFROMFILE Features are stored in X and labels are stored in y. 
 % For frame i, frameTimes(i) is the time in milliseconds and
 % frameUtterances(i) is the frame's utterance number (if the utterances in 
@@ -16,7 +16,7 @@ function [X, y, frameTimes, frameUtterances] = getXYfromFile(filename, ...
     [~, monster] = makeTrackMonster(trackSpec, featureSpec);
 
     % get the annotation table
-    annotationPath = append('annotations\', annotator, '-annotations\', annFilename);
+    annotationPath = append('annotations\', annFilename);
     useFilter = true;
     annotationTable = readElanAnnotation(annotationPath, useFilter);
     
