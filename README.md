@@ -1,6 +1,4 @@
-# Detecting dissatisfaction in spoken dialog
-
-[About the project.]
+# Models for detecting dissatisfaction in spoken dialog
 
 ## Set up
 
@@ -18,18 +16,16 @@
 
 ## Annotations
 
-From the corpus, customer utterances were annotated for dissatisfaction. See [annotations](annotations). The labels `n` and `nn` are read as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class, dissatisfied), and all other labels are ignored. See [annotation-guide.txt](annotation-guide.txt).
+Customer utterances were annotated for dissatisfaction. See [annotations](annotations) and [annotation-guide.txt](annotation-guide.txt). For the frame-level and utterance-level models below, the labels `n` and `nn` are read as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class, dissatisfied), and all other labels are ignored.
 
 ## linearRegressionDialog.m
 
 A dialog-level linear regression model.
 
-The first regressor is trained using the feature set specified in [mono.fss](mono.fss). The second regressor is trained using features based on the frame predictions of the first regressor. For each dialog, the summary features are: (1) the fraction of frames above a *dissatisfaction threshold*; (2) its minimum dissatisfaction value; (3) its maximum dissatisfaction value; (4) its mean dissatisfaction value;
+The first regressor is trained using the feature set specified in [mono.fss](mono.fss). The second regressor is trained using features based on the frame predictions of the first regressor. For each dialog, the summary features are: (1) the fraction of frames above a *dissatisfaction threshold* (see [linearRegressionFrame.m](#linearRegressionFrame.m)); (2) its minimum dissatisfaction value; (3) its maximum dissatisfaction value; (4) its mean dissatisfaction value;
 (5) the range of its dissatisfaction values; and (6) the standard deviation of its dissatisfaction values.
 
-For training, validation, and test sets, see [source/tracklists-dialog](source/tracklists-dialog).
-
-The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the dev set:
+For training, validation, and test sets, see [source/tracklists-dialog](source/tracklists-dialog). The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the validation set:
 
 ```
 beta=0.25, min(yPred)=-32.24, max(yPred)=10.93, mean(yPred)=-0.27
@@ -40,15 +36,16 @@ baselineFscore=0.38, baselinePrecision=0.37, baselineRecall=1.00, baselineMSE=0.
 
 ## linearRegressionFrame.m
 
-A frame-level linear regression model. For train, dev, and test sets, see [source/tracklists-frame](source/tracklists-frame). Each set is 6
-dialogs, half labeled as neutral and half labeled as dissatisfied on the
-dialog level. The dissatisfied dialogs typically have more neutral frames compared to dissatisfied frames so the training data is balanced in code.
+A frame-level linear regression model.
+
+For training, validation, and test sets, see [source/tracklists-frame](source/tracklists-frame). Each set comprises 6
+dialogs, half labeled as neutral and half labeled as dissatisfied. The dissatisfied dialogs typically have more neutral frames compared to dissatisfied frames, so the training data is balanced in code.
 
 The learned coefficients are printed in descending order:
 
 ```none
 Coefficients in descending order with format:
-coefficient number, value, abbreviation
+coefficient number, value, feature abbreviation
  16 | 0.160004 | se vo  +1600  +3200
  78 | 0.151007 | se wp  +800  +1600
  59 | 0.115827 | se np -1600 -800
@@ -75,7 +72,8 @@ baselineFscore=0.36, baselineMSE=0.66
 
 An utterance-level linear regression model. For each utterance, this model predicts the mean, predicted dissatisfaction values for the frames in the utterance.
 
-The baseline always predicts a value of 1 for perfectly dissatisfied. Results using the dev set:
+This model shares the frame-level's
+training, validation, and test set. The baseline always predicts a value of 1 for perfectly dissatisfied. Results using the dev set:
 
 ```none
 beta=0.25, min(yPred)=-0.00, max(yPred)=0.83, mean(yPred)=0.44
