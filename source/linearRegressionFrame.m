@@ -1,20 +1,26 @@
 % linearRegressionFrame.m
 
+%% config
+useTestSet = true; %#ok<*UNRCH>
+
 %% train regressor
 prepareData;
 linearRegressor = fitlm(XtrainFrame, yTrainFrame);
 
-XcompareFrame = XdevFrame;
-yCompareFrame = yDevFrame;
-% XcompareFrame = XtestFrame;
-% yCompareFrame = yTestFrame;
+if useTestSet
+    XcompareFrame = XtestFrame;
+    yCompareFrame = yTestFrame;
+else
+    XcompareFrame = XdevFrame;
+    yCompareFrame = yDevFrame;
+end
 
 %% print out coefficient info
 coefficients = linearRegressor.Coefficients.Estimate;
 coefficients(1) = []; % discard the first coefficient (intercept)
 [coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
 fprintf('Coefficients in descending order with format:\n');
-fprintf('coefficient number, value, abbreviation\n');
+fprintf('coefficient number, value, feature abbreviation\n');
 for i = 1:length(coefficients)
     coeffNum = coeffSortedIdx(i);
     coeffValue = coefficientSorted(i);
