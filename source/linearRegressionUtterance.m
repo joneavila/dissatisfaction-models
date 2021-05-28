@@ -1,74 +1,61 @@
-% utteranceLevel.m 
+% utteranceLevel.m
+
+%% config
+useTestSet = true; %#ok<*UNRCH>
 
 %% train regressor
 prepareData;
 regressor = fitlm(XtrainFrame, yTrainFrame);
 
 %% predict on each utterance in the compare set
-tracklistCompare = tracklistDevFrame;
+if useTestSet
+    timesCompare = timesTestFrame;
+    tracklistCompare = tracklistTestFrame;
+    trackNumsCompare = trackNumsTestFrame;
+    utterNumsCompare = utterNumsTestFrame;
+    Xcompare = XtestFrame;
+    yCompare = yTestFrame;
+else
+    % ...
+end
+
+numTracks = trackNumsCompare(end);
+
 yPred = [];
 yActual = [];
 
-nTracks = size(tracklistCompare, 2);
-for trackNum = 1:nTracks
+for trackNum = 1:numTracks
     
     track = tracklistCompare{trackNum};
-    fprintf('[%d/%d]predicting on %s\n', trackNum, nTracks, ...
+    fprintf('[%d/%d]predicting on %s\n', trackNum, trackNum, ...
         track.filename)
     
-    % get the annotation table, assuming dilaog and annotation files share
-    % the same name
-    [~, name, ~] = fileparts(track.filename);
-    annotationFilename = append(name, '.txt');
-    annotationPathRelative = append('annotations\', annotationFilename);
-    useFilter = true;
-    annotationTable = readElanAnnotation(annotationPathRelative, useFilter);
+    trackDataIdx = trackNumsCompare == trackNum;
     
-    % load the monster, else compute it and save it for future runs
-    dataDir = append(pwd, '\data\monsters\');
-    if ~exist(dataDir, 'dir')
-        mkdir(dataDir)
-    end
-    customerSide = 'l';
-    trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
-    [~, name, ~] = fileparts(track.filename);
-    saveFilename = append(dataDir, name, '.mat');
-    try
-        monster = load(saveFilename);
-        monster = monster.monster;
-    catch 
-        [~, monster] = makeTrackMonster(trackSpec, featureSpec);
-        save(saveFilename, 'monster');
-    end
+    Xtrack = Xcompare(trackDataIdx, :);
+    yTrack = yCompare(trackDataIdx);
+    utterNumsTrack = utterNumsCompare(trackDataIdx);
     
-    % normalize X (monster) using the same centering values and scaling 
-    % values used to normalize the data used for training
-    monster = normalize(monster, 'center', ...
-    centeringValuesFrame, 'scale', scalingValuesFrame);
-    
-    % for each utterance (row in annotation table) let the regressor 
+    numUtter = utterNumsTrack(end);
+ 
+    % for each utterance, let the regressor 
     % predict on each frame of the utterance then make the average of 
     % those predictions the final prediction
-    nUtterances = size(annotationTable, 1);
-    utterancePred = zeros([nUtterances 1]);
-    for rowNum = 1:nUtterances
-        row = annotationTable(rowNum, :);
-        frameStart = round(milliseconds(row.startTime) / 10);
-        frameEnd = round(milliseconds(row.endTime) / 10);
-        utterance = monster(frameStart:frameEnd, :);
-        utterancePredictions = predict(regressor, utterance);
-        utterancePred(rowNum) = mean(utterancePredictions);
+    
+    for utterNum = 1:numUtter
+        
+        utterDataIdx = utterNumsTrack == utterNum;
+        Xutter = Xtrack(utterDataIdx, :);
+        yUtter = yTrack(utterDataIdx);
+        
+        utterPred = mean(predict(regressor, Xutter));
+        utterActual = yUtter(end);
+       
+        % appending is ugly but isn't too slow here
+        yPred = [yPred; utterPred];
+        yActual = [yActual; utterActual];
     end
-    
-    utteranceActual = arrayfun(@labelToFloat, annotationTable.label);
-    
-    % display utterance info in a table
-    disp(table(utterancePred, utteranceActual));
 
-    % appending is ugly but isn't too slow here
-    yPred = [yPred; utterancePred];
-    yActual = [yActual; utteranceActual];
-    
 end
 %% baseline
 % this baseline always predicts 1 for perfectly dissatisfied and should be
