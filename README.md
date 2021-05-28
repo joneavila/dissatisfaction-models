@@ -118,8 +118,3 @@ dissThreshold=0.571
 regressorFscore=0.62, regressorPrecision=0.62, regressorRecall=0.73, regressorMSE=0.25
 baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
 ```
-
-## To do
-
-- [ ] add code to compute the test data
-- [ ] add code to normalize test data
