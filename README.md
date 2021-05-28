@@ -78,36 +78,45 @@ coefficient number, value, feature abbreviation
  2 | -0.285015 | se vo -1600 -800
  ```
 
-The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the dev set:
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the test set:
 
 ```none
 regressorRsquared=0.28
-beta=0.25, dissThreshold=1.115
-regressorFscore=0.38, regressorMSE=0.37
-baselineFscore=0.36, baselineMSE=0.66
+beta=0.25, dissThreshold=0.367
+regressorFscore=0.49, regressorMSE=0.50
+baselineFscore=0.45, baselineMSE=0.57
 ```
 
 With time feature included:
 
 ```none
 regressorRsquared=0.35
-beta=0.25, dissThreshold=0.960
-regressorFscore=0.49, regressorMSE=0.36
-baselineFscore=0.36, baselineMSE=0.66
+beta=0.25, dissThreshold=0.404
+regressorFscore=0.58, regressorMSE=0.40
+baselineFscore=0.45, baselineMSE=0.57
 ```
 
 ## linearRegressionUtterance.m
 
-An utterance-level linear regression model. For each utterance, this model predicts the mean, predicted dissatisfaction values for the frames in the utterance.
+An utterance-level linear regression model. For each utterance, this model predicts the mean, predicted dissatisfaction values for the frames in the utterance. This model shares the frame-level's
+training, validation, and test set. 
 
-This model shares the frame-level's
-training, validation, and test set. The baseline always predicts a value of 1 for perfectly dissatisfied. Results using the dev set:
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the test set:
 
 ```none
-beta=0.25, min(yPred)=-0.00, max(yPred)=0.83, mean(yPred)=0.44
-dissThreshold=0.800
-regressorFscore=0.71, regressorPrecision=1.00, regressorRecall=0.12, regressorMSE=0.26
-baselineFscore=0.25, baselinePrecision=0.24, baselineRecall=1.00, baselineMSE=0.76
+beta=0.25, min(yPred)=-0.02, max(yPred)=1.25, mean(yPred)=0.52
+dissThreshold=0.922
+regressorFscore=0.79, regressorPrecision=1.00, regressorRecall=0.18, regressorMSE=0.27
+baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
+```
+
+With time feature included:
+
+```none
+beta=0.25, min(yPred)=-0.03, max(yPred)=1.30, mean(yPred)=0.50
+dissThreshold=0.571
+regressorFscore=0.62, regressorPrecision=0.62, regressorRecall=0.73, regressorMSE=0.25
+baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
 ```
 
 ## To do
