@@ -5,7 +5,7 @@ useTestSet = true; %#ok<*UNRCH>
 
 %% train regressor
 prepareData;
-linearRegressor = fitlm(XtrainFrame, yTrainFrame);
+regressor = fitlm(XtrainFrame, yTrainFrame);
 
 if useTestSet
     XcompareFrame = XtestFrame;
@@ -16,7 +16,7 @@ else
 end
 
 %% print out coefficient info
-coefficients = linearRegressor.Coefficients.Estimate;
+coefficients = regressor.Coefficients.Estimate;
 coefficients(1) = []; % discard the first coefficient (intercept)
 [coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
 fprintf('Coefficients in descending order with format:\n');
@@ -29,51 +29,59 @@ for i = 1:length(coefficients)
 end
 
 %%  predict on the compare set
-yPred = predict(linearRegressor, XcompareFrame);
+yPred = predict(regressor, XcompareFrame);
 
 % the baseline always predicts dissatisfied (1 for positive class)
 yBaseline = ones(size(yPred));
 %% try different thresholds to find the best Fscore when beta is 0.25
+mse = @(actual, pred) (mean((actual - pred) .^ 2));
 
-% Output as of May 5, 2021:
-%  beta=0.25, bestThreshold=0.555, bestLinearFscore=0.31, ...
-%  baselineFscoreAtBestThreshold=0.27
-
-% Output as of May 20, 2021:
-% beta=0.25, bestThreshold=1.115, bestLinearFscore=0.38, ...
-% baselineFscoreAtBestThreshold=0.36
-
-thresholdMin = min(yPred);
-thresholdMax = max(yPred);
-thresholdNum = 1000;
-thresholdStep = (thresholdMax - thresholdMin) / thresholdNum;
-
+thresholdMin = min(yPred); % TODO try setting to 0
+thresholdMax = max(yPred); % TODO try setting to 1
+thresholdNum = 500;
+thresholdStep = (thresholdMax - thresholdMin) / (thresholdNum - 1);
+thresholds = thresholdMin:thresholdStep:thresholdMax;
 beta = 0.25;
 
-bestFscore = 0;
-baselineFscore = 0;
-bestThreshold = 0;
+varTypes = ["double", "double", "double", "double", "double"];
+varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
+sz = [thresholdNum, length(varNames)];
+resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
+    'VariableNames', varNames);
 
-for threshold = thresholdMin:thresholdStep:thresholdMax
+fprintf('beta=%.2f, min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
+    beta, min(yPred), max(yPred), mean(yPred));
+
+for thresholdNum = 1:length(thresholds)
+    threshold = thresholds(thresholdNum);
     yPredAfterThreshold = yPred >= threshold;
-    [scoreModel, ~, ~] = fScore(yCompareFrame, yPredAfterThreshold, 1, 0, beta);
-    if scoreModel >= bestFscore
-        bestFscore = scoreModel;
-        bestThreshold = threshold;
-        [scoreBaseline, ~, ~] = fScore(yCompareFrame, yBaseline, 1, 0, beta);
-        baselineFscore = scoreBaseline;
-    end
+    [score, precision, recall] = fScore(yCompareFrame, ...
+        yPredAfterThreshold, 1, 0, beta);
+    resultTable{thresholdNum, 1} = threshold;
+    resultTable{thresholdNum, 2} = mse(yPredAfterThreshold, yCompareFrame);
+    resultTable{thresholdNum, 3} = score;
+    resultTable{thresholdNum, 4} = precision;
+    resultTable{thresholdNum, 5} = recall;
 end
 
 % print stats
-fprintf('regressorRsquared=%.2f\n', linearRegressor.Rsquared.adjusted);
-mse = @(actual, pred) (mean((actual - pred) .^ 2));
-regressorMSE = mse(yCompareFrame, yPred);
-baselineMSE = mse(yCompareFrame, yBaseline);
+fprintf('regressorRsquared=%.2f\n', regressor.Rsquared.adjusted);
+[maxScore, maxScoreIdx] = max(resultTable{:, 3});
+bestThreshold = resultTable{maxScoreIdx, 1};
+fprintf('dissThreshold=%.3f\n', bestThreshold);
+regressorPrecision = resultTable{maxScoreIdx, 4};
+regressorRecall = resultTable{maxScoreIdx, 5};
+regressorMSE = resultTable{maxScoreIdx, 2};
+fprintf('regressorFscore=%.2f, regressorPrecision=%.2f, regressorRecall=%.2f, regressorMSE=%.2f\n', ...
+    maxScore, regressorPrecision, regressorRecall, regressorMSE);
 
-fprintf('beta=%.2f, dissThreshold=%.3f\n', beta, bestThreshold);
-fprintf('regressorFscore=%.2f, regressorMSE=%.2f\n', bestFscore, regressorMSE);
-fprintf('baselineFscore=%.2f, baselineMSE=%.2f\n', baselineFscore, baselineMSE);
+% print baseline stats
+yBaselineAfterThreshold = yBaseline >= bestThreshold;
+baselineMSE = mse(yBaselineAfterThreshold, yCompareFrame);
+[baselineFscore, baselinePrecision, baselineRecall] = ...
+    fScore(yCompareFrame, yBaselineAfterThreshold, 1, 0, beta);
+fprintf('baselineFscore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f, baselineMSE=%.2f\n', ...
+    baselineFscore, baselinePrecision, baselineRecall, baselineMSE);
 
 % %% failure analysis
 % 
