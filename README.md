@@ -27,13 +27,13 @@ The first regressor is trained using the feature set specified in [mono.fss](mon
 
 The summary features are computed for each dialog from (including) the first non-`o` (out of character) utterance to (including) the last non-`o` utterance.
 
-For training, validation, and test sets, see [source/tracklists-dialog](source/tracklists-dialog). The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the validation set:
+For training, validation, and test sets, see [source/tracklists-dialog](source/tracklists-dialog). The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the test set:
 
-```
-beta=0.25, min(yPred)=-32.24, max(yPred)=10.93, mean(yPred)=-0.27
-dissThreshold=0.327
-regressorFscore=0.43, regressorPrecision=0.41, regressorRecall=1.00, regressorMSE=65.17
-baselineFscore=0.38, baselinePrecision=0.37, baselineRecall=1.00, baselineMSE=0.63
+```none
+beta=0.25, min(yPred)=-20.39, max(yPred)=5.22, mean(yPred)=0.21
+dissThreshold=0.755
+regressorFscore=0.68, regressorPrecision=0.86, regressorRecall=0.16, regressorMSE=6.75
+baselineFscore=0.52, baselinePrecision=0.51, baselineRecall=1.00, baselineMSE=0.49
 ```
 
 ## linearRegressionFrame.m
