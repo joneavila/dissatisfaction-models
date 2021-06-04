@@ -1,16 +1,25 @@
 % logisticRegressionDialog.m
 
+%% config
+useTestSet = false; %#ok<*UNRCH>
+
 %% train the first regressor
 prepareData;
 firstRegressor = fitlm(XtrainDialog, yTrainDialog);
 
 %% get the summary features for the second regressor's data
+fprintf('Get summary features for train set\n');
 [XsummaryTrain, yActualTrain] = getSummaryXy(tracklistTrainDialog, ...
-    centeringValuesDialog, scalingValuesDialog, firstRegressor);
-[XsummaryCompare, yActualCompare] = getSummaryXy(tracklistDevDialog, ...
-    centeringValuesDialog, scalingValuesDialog, firstRegressor);
-% [XsummaryCompare, yActualCompare] = getSummaryXy(trackListTestDialog, ...
-%     centeringValuesDialog, scalingValuesDialog, firstRegressor);
+    centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
+
+fprintf('Get summary features for compare set\n');
+if useTestSet
+    [XsummaryCompare, yActualCompare] = getSummaryXy(tracklistTestDialog, ...
+    centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
+else
+    [XsummaryCompare, yActualCompare] = getSummaryXy(tracklistDevDialog, ...
+    centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
+end
 
 %% train the second regressor
 secondRegressor = fitlm(XsummaryTrain, yActualTrain);
@@ -144,7 +153,8 @@ fprintf('baselineFscore=%.2f, baselinePrecision=%.2f, baselineRecall=%.2f, basel
 % end
 
 function [Xsummary, yActual] = getSummaryXy(tracklist, ...
-    normalizeCenteringValues, normalizeScalingValues, firstRegressor)
+    normalizeCenteringValues, normalizeScalingValues, firstRegressor, ...
+    useTimeFeature)
 
     featureSpec = getfeaturespec('.\source\mono.fss');
     nTracks = size(tracklist, 2);
@@ -153,7 +163,11 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
     Xsummary = zeros([nTracks numSummaryFeatures]);
     yActual = zeros(size(tracklist));
     
-    dataDir = append(pwd, '\data\monsters\');
+    if useTimeFeature
+        dataDir = append(pwd, '\data\monsters-with-time\');
+    else
+        dataDir = append(pwd, '\data\monsters-without-time\');
+    end
     if ~exist(dataDir, 'dir')
         mkdir(dataDir)
     end
@@ -162,7 +176,7 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
         
         track = tracklist{trackNum};
         filename = track.filename;
-        fprintf('[%d/%d] %s... ', trackNum, nTracks, track.filename);
+        fprintf('\t[%d/%d] %s... ', trackNum, nTracks, track.filename);
         
         % get the annotation path, assuming they share the same name
         [~, name, ~] = fileparts(filename);
@@ -187,9 +201,14 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
             monster = load(saveFilename);
             monster = monster.monster;
         catch 
-            [~, monster] = makeTrackMonster(trackSpec, featureSpec);
-            save(saveFilename, 'monster');
+            % [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+            % save(saveFilename, 'monster');
+            error('monster not found: %s\n', filename);
+            exit;
         end
+        
+        % TODO bug fix
+        monster = monster(:,1:119);
 
         % normalize X (monster) using the same centering values and scaling 
         % values used to normalize the data used for training
@@ -234,22 +253,37 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
         % feature 1 - number of frames in dialogPred above the best 
         % threshold (the threshold with best F_0.25 score, found in 
         % linearRegressionFrame.m) divided by the number of total frames
-        % feature 2 - min of dialogPred
-        % feature 3 - max of dialogPred
-        % feature 4 - average of dialogPred
-        % feature 5 - range of dialogPred 
-        % feature 6 - standard deviation of dialogPred
-        DISS_THRESHOLD = 1.115; % found in linearRegressionFrame.m
+        % DISS_THRESHOLD = 1.115; % found in linearRegressionFrame.m
+        DISS_THRESHOLD = 0.953; % found in linearRegressionFrame.m
         Xsummary(trackNum, 1) = nnz(dialogPred > DISS_THRESHOLD) / ...
             length(dialogPred);
+        
+        % feature 2 - min of dialogPred
         Xsummary(trackNum, 2) = min(dialogPred);
+        
+        % feature 3 - max of dialogPred
         Xsummary(trackNum, 3) = max(dialogPred);
+        
+        % feature 4 - average of dialogPred
         Xsummary(trackNum, 4) = mean(dialogPred);
-        Xsummary(trackNum, 5) = range(dialogPred);
+        
+        % get the range of predictions, ignoring the first and last x%
+        % frames to try to ignore outliers
+        toIgnore = 0.01;
+        dialogPredSorted = sort(dialogPred);
+        skipIntoIdx = round(length(dialogPredSorted) * toIgnore);
+        if skipIntoIdx
+            dialogPredRange = range(dialogPredSorted(skipIntoIdx:end-skipIntoIdx));
+        else
+            dialogPredRange = range(dialogPred);
+        end
+        
+        % feature 5 - range of dialogPred 
+        Xsummary(trackNum, 5) = dialogPredRange;
+        
+        % feature 6 - standard deviation of dialogPred
         Xsummary(trackNum, 6) = std(dialogPred);
         
-        % TODO update to overlay annotations
-        % plot dialogPred over time
         plotDirectory = append(pwd, "\time-pred-plots\");
         if ~exist(plotDirectory, 'dir')
             mkdir(plotDirectory)
