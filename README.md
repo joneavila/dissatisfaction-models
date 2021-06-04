@@ -4,7 +4,7 @@
 
 1. Clone this repo or download it as a ZIP and extract.
 1. Download [The UTEP Corpus of Dissatisfaction in Spoken Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus). Place the `calls`
-   folder and `call-log.xlsx` in the root of this project.
+   folder, `annotations` folder, and `call-log.xlsx` in the root of this project.
 1. Download [Midlevel Prosodic Features Toolkit](https://github.com/nigelgward/midlevel). Place the `midlevel-master` folder
    in the root of this project.
 1. Open this project
@@ -16,7 +16,7 @@
 
 ## Annotations
 
-Customer utterances were annotated for dissatisfaction. See [annotations](annotations) and [annotation-guide.txt](annotation-guide.txt). For the frame-level and utterance-level models below, the labels `n` and `nn` are read as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class, dissatisfied), and all other labels are ignored.
+Customer utterances were annotated for dissatisfaction (see [The UTEP Corpus of Dissatisfaction in Spoken Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus)). For the frame-level and utterance-level models below, the labels `n` and `nn` are read as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class, dissatisfied), and all other labels are ignored.
 
 ## linearRegressionDialog.m
 
