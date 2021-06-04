@@ -1,6 +1,6 @@
 % prepareData.m
 %% config
-useTimeFeature = false; %#ok<*UNRCH>
+useTimeFeature = true; %#ok<*UNRCH>
 
 %% load feature spec
 featureSpec = getfeaturespec('.\source\mono.fss');
@@ -200,8 +200,6 @@ if ~loadedAll
     end
 end
 
-%%  load precomupted test data, else compute it and save it for future runs
-tracklistTestDialog = gettracklist('tracklists-dialog\test.tl');
 if useTimeFeature
     dataDir = append(pwd, '\data\monsters-with-time'); 
 else
@@ -211,11 +209,36 @@ if ~exist(dataDir, 'dir')
     mkdir(dataDir)
 end
 
-numTracks = length(tracklistTestDialog);
-% disp(numTracks);
+%  load precomupted dialog-level train data, else compute it and save it for future runs
+numTracks = length(tracklistTrainDialog);
 for trackNum = 1:numTracks
-    % disp(trackNum);
+    track = tracklistTrainDialog{trackNum};
+    fprintf('\t[%d/%d] %s\n', trackNum, numTracks, track.filename);
+    customerSide = 'l';
+    trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
+    [~, name, ~] = fileparts(track.filename);
+    saveFilename = append(dataDir, '\', name, '.mat');
+    try
+        monster = load(saveFilename);
+        monster = monster.monster;
+    catch
+        [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+        if useTimeFeature
+            matchingTimes = [1:1:size(monster,1)]';
+            matchingTimes = arrayfun(@(frameNum) ...
+                frameNumToTime(frameNum), matchingTimes);
+            monster = [monster seconds(matchingTimes)];
+        end
+        save(saveFilename, 'monster');
+    end
+end    
+
+% load precomupted dialog-level test data, else compute it and save it for future runs
+tracklistTestDialog = gettracklist('tracklists-dialog\test.tl');
+numTracks = length(tracklistTestDialog);
+for trackNum = 1:numTracks
     track = tracklistTestDialog{trackNum};
+    fprintf('\t[%d/%d] %s\n', trackNum, numTracks, track.filename);
     customerSide = 'l';
     trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
     [~, name, ~] = fileparts(track.filename);
