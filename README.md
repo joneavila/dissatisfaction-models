@@ -131,3 +131,14 @@ Calculate the agreement between model predictions and human labels. Results on t
 
     0.10743     0.011274    0.10168    0.11317     {'Slight'}    9.5282       0 
 ```
+
+## calculateAgreement2.m
+
+Inter-rater agreement for 18 dialogs:
+
+```none
+    Fleiss_k      error      Confidence_Interval     Agreement        z       p_value
+    ________    _________    ___________________    ____________    ______    _______
+
+    0.59414     0.0033992    0.59241    0.59587     {'Moderate'}    174.79       0   
+```
