@@ -1,6 +1,7 @@
 % calculateAgreement.m
 % This script requires the Fleiss' kappa script found at:
-% https://www.mathworks.com/matlabcentral/fileexchange/15426-fleiss
+%   https://www.mathworks.com/matlabcentral/fileexchange/15426-fleiss
+%   Cardillo G. (2007)
 
 %% Test the Fleiss' kappa script with an example.
 % https://en.wikipedia.org/wiki/Fleiss%27_kappa#Worked_example
