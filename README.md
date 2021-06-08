@@ -78,17 +78,7 @@ coefficient number, value, feature abbreviation
  2 | -0.285015 | se vo -1600 -800
  ```
 
-The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the test set:
-
-```none
-beta=0.25, min(yPred)=-1.13, max(yPred)=7.16, mean(yPred)=0.55
-regressorRsquared=0.28
-dissThreshold=0.370
-regressorFscore=0.49, regressorPrecision=0.48, regressorRecall=0.71, regressorMSE=0.46
-baselineFscore=0.45, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.57
-```
-
-With time feature included:
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the test set, with time feature included:
 
 ```none
 beta=0.25, min(yPred)=-3.16, max(yPred)=5.53, mean(yPred)=0.53
@@ -96,6 +86,14 @@ regressorRsquared=0.35
 dissThreshold=0.411
 regressorFscore=0.58, regressorPrecision=0.57, regressorRecall=0.81, regressorMSE=0.35
 baselineFscore=0.45, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.57
+```
+
+```none
+beta=1.00, min(yPred)=-3.16, max(yPred)=5.53, mean(yPred)=0.53
+regressorRsquared=0.35
+dissThreshold=0.411
+regressorFscore=0.67, regressorPrecision=0.57, regressorRecall=0.81, regressorMSE=0.35
+baselineFscore=0.60, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.57
 ```
 
 ## linearRegressionUtterance.m
