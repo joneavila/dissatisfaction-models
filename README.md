@@ -121,24 +121,21 @@ regressorFscore=0.62, regressorPrecision=0.62, regressorRecall=0.73, regressorMS
 baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
 ```
 
-## calculateAgreement.m
+## calculateCorpusStats.m
 
-Calculate the agreement between model predictions and human labels. Results on the dev set:
-
-```none
-    Fleiss_k     error      Confidence_Interval    Agreement       z       p_value
-    ________    ________    ___________________    __________    ______    _______
-
-    0.10743     0.011274    0.10168    0.11317     {'Slight'}    9.5282       0 
-```
-
-## calculateAgreement2.m
-
-Inter-rater agreement for 18 dialogs:
+Print the number of neutral and dissatisfied frames in the dialog-level sets and print the number of neutral and dissatisfied utterances in the dialog-level sets. Output:
 
 ```none
-    Fleiss_k      error      Confidence_Interval     Agreement        z       p_value
-    ________    _________    ___________________    ____________    ______    _______
-
-    0.59414     0.0033992    0.59241    0.59587     {'Moderate'}    174.79       0   
+train frames
+	neutral=8335, dissatisfied=7899
+dev frames
+	neutral=14084, dissatisfied=7581
+test frames
+	neutral=54543, dissatisfied=20893
+train utterances
+	neutral=46 (n=33, nn=13), dissatisfied=24 (d=16, dd=8)
+dev utterances
+	neutral=52 (n=43, nn=9), dissatisfied=23 (d=14, dd=9)
+test utterances
+	neutral=256 (n=200, nn=56), dissatisfied=82 (d=63, dd=19)
 ```
