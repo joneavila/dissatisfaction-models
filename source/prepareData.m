@@ -161,6 +161,7 @@ XtestFrame = normalize(XtestFrame, 'center', centeringValuesFrame, ...
 disp('loading dialog-level data');
 tracklistTrainDialog = gettracklist('tracklists-dialog\train.tl');
 tracklistDevDialog = gettracklist('tracklists-dialog\dev.tl');
+tracklistTestDialog = gettracklist('tracklists-dialog\test.tl');
 
 if useTimeFeature
     dataDir = append(pwd, '\data\dialog-with-time'); 
@@ -197,6 +198,64 @@ if ~loadedAll
     for i = 1:length(filenamesTrainDialog)
         saveFilename = append(dataDir, '\', filenamesTrainDialog(i), '.mat');
         save(saveFilename, filenamesTrainDialog(i));
+    end
+end
+
+% load precomupted dev data, else compute it and save it for future runs
+filenamesDevDialog = ["timesDevDialog" "trackNumsDevDialog" ...
+    "utterNumsDevDialog" "XdevDialog" "yDevDialog"];
+loadedAll = true;
+for i = 1:length(filenamesDevDialog)
+    saveFilename = append(dataDir, '\', filenamesDevDialog(i), '.mat');
+    try
+        load(saveFilename);
+    catch
+        loadedAll = false;
+        break
+    end
+end
+if ~loadedAll
+    [XdevDialog, yDevDialog, trackNumsDevDialog, timesDevDialog, ...
+        utterNumsDevDialog] = getXYfromTrackList(tracklistDevDialog, ...
+        featureSpec);
+    
+    if useTimeFeature
+        % include timesDevFrame as a feature
+        XdevDialog(:, timeFeatureNum) = seconds(timesDevDialog);
+    end
+    
+    for i = 1:length(filenamesDevDialog)
+        saveFilename = append(dataDir, '\', filenamesDevDialog(i), '.mat');
+        save(saveFilename, filenamesDevDialog(i));
+    end
+end
+
+% load precomupted test data, else compute it and save it for future runs
+filenamesTestDialog = ["timesTestDialog" "trackNumsTestDialog" ...
+    "utterNumsTestDialog" "XtestDialog" "yTestDialog"];
+loadedAll = true;
+for i = 1:length(filenamesTestDialog)
+    saveFilename = append(dataDir, '\', filenamesTestDialog(i), '.mat');
+    try
+        load(saveFilename);
+    catch
+        loadedAll = false;
+        break
+    end
+end
+if ~loadedAll
+    [XtestDialog, yTestDialog, trackNumsTestDialog, timesTestDialog, ...
+        utterNumsTestDialog] = getXYfromTrackList(tracklistTestDialog, ...
+        featureSpec);
+    
+    if useTimeFeature
+        % include timesTestFrame as a feature
+        XtestDialog(:, timeFeatureNum) = seconds(timesTestDialog);
+    end
+    
+    for i = 1:length(filenamesTestDialog)
+        saveFilename = append(dataDir, '\', filenamesTestDialog(i), '.mat');
+        save(saveFilename, filenamesTestDialog(i));
     end
 end
 
