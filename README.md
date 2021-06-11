@@ -43,25 +43,8 @@ A frame-level linear regression model.
 For training, validation, and test sets, see [source/tracklists-frame](source/tracklists-frame). Each set comprises 6
 dialogs, half labeled as neutral and half labeled as dissatisfied. The dissatisfied dialogs typically have more neutral frames compared to dissatisfied frames, so the training data is balanced in code.
 
-The learned coefficients are printed in descending order:
+The learned coefficients are printed in descending order, with time feature included:
 
-```none
-Coefficients in descending order with format:
-coefficient number, value, feature abbreviation
- 16 | 0.160004 | se vo  +1600  +3200
- 78 | 0.151007 | se wp  +800  +1600
- 59 | 0.115827 | se np -1600 -800
-  1 | 0.110473 | se vo -3200 -1600
- 14 | 0.107677 | se vo  +400  +800
-...
- 57 | -0.071638 | se th  +400  +800
- 44 | -0.078300 | se tl  +800  +1600
- 30 | -0.082371 | se cr  +800  +1600
-108 | -0.095654 | se pd  +800  +1600
-  2 | -0.227057 | se vo -1600 -800
-```
-
-With time feature included:
 ```none
 Coefficients in descending order with format:
 coefficient number, value, feature abbreviation
@@ -101,16 +84,7 @@ baselineFscore=0.60, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.
 An utterance-level linear regression model. For each utterance, this model predicts the mean, predicted dissatisfaction values for the frames in the utterance. This model shares the frame-level's
 training, validation, and test set. 
 
-The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the test set:
-
-```none
-beta=0.25, min(yPred)=-0.02, max(yPred)=1.25, mean(yPred)=0.52
-dissThreshold=0.922
-regressorFscore=0.79, regressorPrecision=1.00, regressorRecall=0.18, regressorMSE=0.27
-baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
-```
-
-With time feature included:
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results on the test set, with time feature included:
 
 ```none
 beta=0.25, min(yPred)=-0.03, max(yPred)=1.30, mean(yPred)=0.50
@@ -136,4 +110,18 @@ dev utterances
 	neutral=52 (n=43, nn=9), dissatisfied=23 (d=14, dd=9)
 test utterances
 	neutral=256 (n=200, nn=56), dissatisfied=82 (d=63, dd=19)
+```
+
+## calculateCorrelations.m
+
+Calculates the point-biserial correlation coefficient (Pearson's correlation coefficient) for each feature and dissatisfaction. Results are stored in `resultsTable`. Head and tail of `resultsTable`:
+
+```none
+"se vo -3200 -1600"	 0.0399280043250400	 0.0399293872328013
+"se vo -1600 -800"	 0.0628281694906818	 0.0628303455464271
+"se vo -800 -400"	 0.0181824412947618	 0.0181830710442223
+...
+"se vr  +400  +800"	-0.0222615534871412	-0.0222623245167907
+"se vr  +800  +1600"-0.0453442255170480	-0.0453457960158128
+"time into dialog"	 0.309024112402498	 0.309034815462936
 ```
