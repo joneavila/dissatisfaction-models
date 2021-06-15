@@ -2,6 +2,7 @@
 
 %% config
 useTestSet = true; %#ok<*UNRCH>
+beta = 0.25;
 
 %% train regressor
 prepareData;
@@ -41,7 +42,6 @@ thresholdMax = max(yPred); % TODO try setting to 1
 thresholdNum = 500;
 thresholdStep = (thresholdMax - thresholdMin) / (thresholdNum - 1);
 thresholds = thresholdMin:thresholdStep:thresholdMax;
-beta = 0.25;
 
 varTypes = ["double", "double", "double", "double", "double"];
 varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
