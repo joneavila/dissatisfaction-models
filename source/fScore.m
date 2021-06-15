@@ -35,6 +35,12 @@ function [score, precision, recall] = fScore(yActual, yPred, classPositive, clas
     % calculate f score
     precision = tp / (tp + fp);
     recall = tp / (tp + fn);
+    if isnan(precision)
+        precision = 0;
+    end
+    if isnan(recall)
+        recall = 0;
+    end
     if precision == 0 || recall == 0
         score = 0;
     else
