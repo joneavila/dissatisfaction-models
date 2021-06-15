@@ -21,6 +21,16 @@ else
     centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
 end
 
+%% calculate summary features correlations
+X = [XsummaryTrain; XsummaryCompare];
+y = [yActualTrain yActualCompare];
+r1 = corr(X);
+r2 = corr(X, y');
+
+%% feature selection
+XsummaryTrain = XsummaryTrain(:,[1 4 6]);
+XsummaryCompare = XsummaryCompare(:,[1 4 6]);
+
 %% train the second regressor
 secondRegressor = fitlm(XsummaryTrain, yActualTrain);
 
@@ -204,11 +214,16 @@ function [Xsummary, yActual] = getSummaryXy(tracklist, ...
             % [~, monster] = makeTrackMonster(trackSpec, featureSpec);
             % save(saveFilename, 'monster');
             error('monster not found: %s\n', filename);
-            exit;
         end
         
-        % TODO bug fix
-        monster = monster(:,1:119);
+        % temporary bug fix
+        % rerun prepareData script to rebuild data/monsters-with-time
+        if size(monster,2) == 120
+            monster = monster(:,1:119);
+        elseif size(monster,2) == 118
+            monster(:,119) = monster(:,118);
+        end
+        
 
         % normalize X (monster) using the same centering values and scaling 
         % values used to normalize the data used for training
