@@ -286,11 +286,35 @@ for trackNum = 1:numTracks
             matchingTimes = [1:1:size(monster,1)]';
             matchingTimes = arrayfun(@(frameNum) ...
                 frameNumToTime(frameNum), matchingTimes);
-            monster = [monster seconds(matchingTimes)];
+            monster(:,timeFeatureNum) = seconds(matchingTimes);
         end
         save(saveFilename, 'monster');
     end
 end    
+
+%  load precomupted dialog-level dev data, else compute it and save it for future runs
+numTracks = length(tracklistDevDialog);
+for trackNum = 1:numTracks
+    track = tracklistDevDialog{trackNum};
+    fprintf('\t[%d/%d] %s\n', trackNum, numTracks, track.filename);
+    customerSide = 'l';
+    trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
+    [~, name, ~] = fileparts(track.filename);
+    saveFilename = append(dataDir, '\', name, '.mat');
+    try
+        monster = load(saveFilename);
+        monster = monster.monster;
+    catch
+        [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+        if useTimeFeature
+            matchingTimes = [1:1:size(monster,1)]';
+            matchingTimes = arrayfun(@(frameNum) ...
+                frameNumToTime(frameNum), matchingTimes);
+            monster(:,timeFeatureNum) = seconds(matchingTimes);
+        end
+        save(saveFilename, 'monster');
+    end
+end 
 
 % load precomupted dialog-level test data, else compute it and save it for future runs
 tracklistTestDialog = gettracklist('tracklists-dialog\test.tl');
@@ -311,7 +335,7 @@ for trackNum = 1:numTracks
             matchingTimes = [1:1:size(monster,1)]';
             matchingTimes = arrayfun(@(frameNum) ...
                 frameNumToTime(frameNum), matchingTimes);
-            monster = [monster seconds(matchingTimes)];
+            monster(:,timeFeatureNum) = seconds(matchingTimes);
         end
         save(saveFilename, 'monster');
     end
