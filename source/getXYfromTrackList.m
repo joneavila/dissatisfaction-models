@@ -17,15 +17,6 @@ function [X, y, frameTrackNums, frameUtterances] = ...
         
         fprintf('[%d/%d] Getting X and y for %s\n', trackNum, nTracks, ...
             track.filename);
-        
-        % ignore if the annotation file does not exist
-        [~, name, ~] = fileparts(track.filename);
-        annFilename = append(name, ".txt");
-        annotationFilename = append(pwd, '/annotations/', annFilename);
-        if ~isfile(annotationFilename)
-            fprintf('\tannotation file not found, skip\n');
-            continue
-        end
     
         [dialogX, dialogY, dialogFrameUtterances] = ...
             getXYfromFile(track.filename, featureSpec);
