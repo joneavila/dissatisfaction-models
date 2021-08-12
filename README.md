@@ -2,22 +2,34 @@
 
 ## Set up
 
-1. Clone this repo or download it as a ZIP and extract.
-1. Download [The UTEP Corpus of Dissatisfaction in Spoken
-   Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus). Place the
-   `calls` folder, `annotations` folder, and `call-log.xlsx` in the root of this
-   project.ß
-1. Download [Midlevel Prosodic Features
-   Toolkit](https://github.com/nigelgward/midlevel). Place the `midlevel-master`
-   folder in the root of this project.
-1. Open this project (the `dissatisfaction-models` folder) in MATLAB.
-1. Install MathWorks' [Signal Processing
+1. Clone this repo or download it as a ZIP archive and extract it.
+2. Download [The UTEP Corpus of Dissatisfaction in Spoken
+   Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus). Copy or move the
+   `calls` folder, `annotations` folder, and `call-log.xlsx` to the root of the
+   project folder.
+3. Download [Midlevel Prosodic Features
+   Toolkit](https://github.com/nigelgward/midlevel). Copy or move the `midlevel-master`
+   folder to the root of the project folder.
+4. Install MathWorks' [Signal Processing
    Toolbox](https://www.mathworks.com/products/signal.html) and [Statistics and
    Machine Learning
-   Toolbox](https://www.mathworks.com/products/statistics.html).
-1. **Add the project folder and its subfolders to Path.** Right-click the folder
-   in the Current Folder window or use the
+   Toolbox](https://www.mathworks.com/products/statistics.html). To install
+   add-ons, from MATLAB's "Home" menu tab, click "Add-Ons", then "Get Add-Ons" or "Manage Add-Ons".
+5. Open the root of the project folder (`dissatisfaction-models` folder) in
+   MATLAB. MATLAB's address field (below the ribbon menu) should end with `.../dissatisfaction-models`.
+6. Add the root of the project folder and its subfolders to Path. To add a folder to Path,
+   from MATLAB's "Current Folder" pane, right-click the folder, then click "Add
+   to Path", then click "Selected Folder and Subfolders". Alternatively, you can
+   use the
    [addpath](https://www.mathworks.com/help/matlab/ref/addpath.html) function.
+
+## To do
+- [ ] The values for neutral and dissatisfaction labels are set to 0 and 1,
+  respectively, throughout the code. These values should not be hardcoded.
+- [ ] Many functions rely on the `pwd` command. This explains why you must be in
+  the root of the project folder.
+- [ ] Since working from a Mac, I've changed back slashes to forward slashes.
+  There might be a way to keep the code compatible for all systems?
 
 ## Annotations
 
