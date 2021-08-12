@@ -5,6 +5,10 @@ dataDir = append(pwd, '/data/frame-level');
 
 featureSpec = getfeaturespec('./source/mono.fss');
 
+tracklistTrainFrame = gettracklist('tracklists-frame/train.tl');
+tracklistDevFrame = gettracklist('tracklists-frame/dev.tl');
+tracklistTestFrame = gettracklist('tracklists-frame/test.tl');
+
 % create the data directory if it doesn't exist
 if ~exist(dataDir, 'dir')
     mkdir(dataDir) 
@@ -18,24 +22,21 @@ numFiles = size(files, 1);
 % them for future runs 
 if numFiles
     for i = 1:numFiles
-        load(files(i).name)
+        load(append(dataDir, '/', files(i).name))
     end
 else
     
     % compute train data
-    tracklistTrainFrame = gettracklist('tracklists-frame/train.tl');
     [XtrainFrame, yTrainFrame, trackNumsTrainFrame, ...
         utterNumsTrainFrame] = getXYfromTrackList(tracklistTrainFrame, ...
         featureSpec);
     
     % compute dev data
-    tracklistDevFrame = gettracklist('tracklists-frame/dev.tl');
     [XdevFrame, yDevFrame, trackNumsDevFrame, ...
         utterNumsDevFrame] = getXYfromTrackList(tracklistDevFrame, ...
         featureSpec);
 
     % compute test data
-    tracklistTestFrame = gettracklist('tracklists-frame/test.tl');
     [XtestFrame, yTestFrame, trackNumsTestFrame, ...
         utterNumsTestFrame] = getXYfromTrackList(tracklistTestFrame, ...
         featureSpec);
