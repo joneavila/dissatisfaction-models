@@ -41,8 +41,7 @@ function [X, y, frameUtterances] = getXYfromFile(filename, featureSpec)
     frameTimes = arrayfun(@(frameNum) frameNumToTime(frameNum), ...
         matchingFrameNums);
     frameUtterances = frameUtterances(isFrameAnnotated);
-    
-    % NEW - frameTimes is now a feature included in X
+
     X = [X seconds(frameTimes)];
 
 end
