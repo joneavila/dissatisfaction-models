@@ -1,25 +1,20 @@
 % calculateAgreement2.m
+% Calculate agreement between raters.
 
 % this tracklist has all 18 tracks
 % try a tracklist excluding tracks in the train set next
 tracksAll = [
-    "20201229-aa-5f6b70d050d8b206c64e4ba1-tire-y-y.txt"
-    "20210112-jl-5d67b4c31e367a0017273ecb-pet-n-n.txt"
-    "20210112-sf-5e2cf87d49436731eac78e46-cable-n-n.txt"
-    "20210114-ja-5e9d5b3a9a4acf0009ff70cc-console-n-n.txt"
-    "20210114-ja-5f46aa41d1c4910597680a40-console-n-n.txt"
-    "20210115-aa-5f2fad64d1609e000b157ba5-magician-y-y.txt"
-    "20210118-aa-5e8b62e78dddff0287b5dd7d-wall-n-n.txt"
-    "20210118-aa-5ec3c753622b97236b9e6796-wall-n-n.txt"
-    "20210118-ja-5e8b62e78dddff0287b5dd7d-tire-n-n.txt"
-    "20210118-ja-5eb350c50f432115af792bf9-tire-n-n.txt"
-    "20210118-sf-5c51b4d014aa5000015523f0-lawn-y-y.txt"
-    "20210118-sf-5e8b62e78dddff0287b5dd7d-lawn-y-y.txt"
-    "20210122-jl-5fa2e888f2ec2d41c1faf2d1-tire-y-y.txt"
-    "20210126-aa-5ecc4a93243b34435985b392-console-y-y.txt"
-    "20210128-jl-5f3528bbed7b4d2df5cf0c4b-tire-y-y.txt"
-    "20210202-jl-5e4a2f23f64db74915406236-magician-y-y-second.txt"
-    "20210202-jl-5e4a2f23f64db74915406236-magician-y-y.txt"
+%     "20201226-aa-5f6b70d050d8b206c64e4ba1-tire-y-y.txt"
+    "20210112-jl-5d67b4c31e367a0017273ecb-pet-n-n.txt",
+    "20210114-ja-5e9d5b3a9a4acf0009ff70cc-console-n-n.txt",
+    "20210118-aa-5e8b62e78dddff0287b5dd7d-wall-n-n.txt",
+    "20210118-ja-5e8b62e78dddff0287b5dd7d-tire-n-n.txt",
+    "20210118-ja-5eb350c50f432115af792bf9-tire-n-n.txt",
+    "20210118-sf-5c51b4d014aa5000015523f0-lawn-y-y.txt",
+    "20210118-sf-5e8b62e78dddff0287b5dd7d-lawn-y-y.txt",
+    "20210122-jl-5fa2e888f2ec2d41c1faf2d1-tire-y-y.txt",
+    "20210126-aa-5ecc4a93243b34435985b392-console-y-y.txt",
+    "20210128-jl-5f3528bbed7b4d2df5cf0c4b-tire-y-y.txt",
     "20210204-jl-5eb5c2051cabb149a0636117-magician-n-n.txt"
 ];
 
@@ -59,7 +54,7 @@ for trackNum = 1:numTracks
     % read the audio to get the duration
     [~, name, ~] = fileparts(annFilename);
     audioFilename = append(name, ".wav");
-    [audioData, sampleRate] = audioread(append('calls\', audioFilename));
+    [audioData, sampleRate] = audioread(append(pwd, '\calls\', audioFilename));
     durationSeconds = length(audioData) / sampleRate;
     
     numFrames = round(durationSeconds) * 100;
@@ -109,6 +104,24 @@ calculateAgreement(raterScoresJAAD);
 % agreement for NW vs AD
 raterScoresNWAD = raterScores(:,[2 4]);
 calculateAgreement(raterScoresNWAD);
+
+%% cohen kappa
+
+getAgreement(raterScoresAAAD);
+getAgreement(raterScoresJAAD);
+getAgreement(raterScoresNWAD);
+
+% raters = ["aa" "ad" "ja" "nw"];
+function getAgreement(raterScoresPair)
+    classNeut = 0;
+    classDiss = 1;
+    tp = nnz((raterScoresPair(:,1) == classDiss) & (raterScoresPair(:,2) == classDiss));
+    tn = nnz((raterScoresPair(:,1) == classNeut) & (raterScoresPair(:,2) == classNeut));
+    fp = nnz((raterScoresPair(:,1) == classDiss) & (raterScoresPair(:,2) == classNeut));
+    fn = nnz((raterScoresPair(:,1) == classNeut) & (raterScoresPair(:,2) == classDiss));
+    total = tp + tn + fp + fn;
+    fprintf('tp=%d tn=%d fp=%d fn=%d total=%d\n', tp, tn, fp, fn, total);
+end
 
 function annTable = getAnnotationTable(rater, annFilename)
     annPath = append('source\agreement\', rater, '-annotations\', annFilename);
