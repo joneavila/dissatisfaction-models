@@ -5,7 +5,7 @@ useTestSet = true; %#ok<*UNRCH>
 beta = 0.25;
 
 %% train regressor
-prepareData;
+prepareDataFrame;
 regressor = fitlm(XtrainFrame, yTrainFrame);
 
 if useTestSet
@@ -25,7 +25,13 @@ fprintf('coefficient number, value, feature abbreviation\n');
 for i = 1:length(coefficients)
     coeffNum = coeffSortedIdx(i);
     coeffValue = coefficientSorted(i);
-    coeffAbbrev = featureSpec(coeffNum).abbrev;
+    
+    if coeffNum < length(featureSpec)
+        coeffAbbrev = featureSpec(coeffNum).abbrev;
+    else
+        coeffAbbrev = 'coeffAbbrev not found'; % to handle extra features (right now there is just the time feature)
+    end
+    
     fprintf('%2d | %f | %s\n', coeffNum, coeffValue, coeffAbbrev);
 end
 
