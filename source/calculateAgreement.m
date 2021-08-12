@@ -1,4 +1,6 @@
 % calculateAgreement.m
+% Calculate the agreement between model predictions and labels.
+
 % This script requires the Fleiss' kappa script found at:
 %   https://www.mathworks.com/matlabcentral/fileexchange/15426-fleiss
 %   Cardillo G. (2007)
@@ -18,7 +20,7 @@ x = [0 0 0 0 14;
      0 2 2 3  7];
 fleiss(x);
 
-%% Calculate the agreement between model predictions and human labels.
+%% Calculate the agreement between model predictions and labels.
 prepareData;
 model = fitlm(XtrainFrame, yTrainFrame);
 
