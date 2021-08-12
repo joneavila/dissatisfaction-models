@@ -32,7 +32,7 @@ for i = 1:length(coeffs)
     % there may be more features than specified in featureSpec
     % for now there is only the extra time feature to worry about
     % (see prepareDataFrame.m description)
-    if coeffNum < length(featureSpec)
+    if coeffNum <= length(featureSpec)
         coeffAbbrev = featureSpec(coeffNum).abbrev;
     else
         coeffAbbrev = 'NA (not specified in featureSpec)'; 
