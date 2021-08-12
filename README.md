@@ -5,31 +5,35 @@
 1. Clone this repo or download it as a ZIP archive and extract it.
 2. Download [The UTEP Corpus of Dissatisfaction in Spoken
    Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus). Copy or move the
-   `calls` folder, `annotations` folder, and `call-log.xlsx` to the root of the
-   project folder.
+   `calls` folder, `annotations` folder, and `call-log.xlsx` to the
+   project's root folder (`dissatisfaction-models`).
 3. Download [Midlevel Prosodic Features
    Toolkit](https://github.com/nigelgward/midlevel). Copy or move the `midlevel-master`
-   folder to the root of the project folder.
+   folder to the project's root folder.
 4. Install MathWorks' [Signal Processing
    Toolbox](https://www.mathworks.com/products/signal.html) and [Statistics and
    Machine Learning
    Toolbox](https://www.mathworks.com/products/statistics.html). To install
-   add-ons, from MATLAB's "Home" menu tab, click "Add-Ons", then "Get Add-Ons" or "Manage Add-Ons".
-5. Open the root of the project folder (`dissatisfaction-models` folder) in
+   add-ons from MATLAB, from the "Home" menu tab, click "Add-Ons", then "Get Add-Ons".
+5. Open the project's root folder in
    MATLAB. MATLAB's address field (below the ribbon menu) should end with `.../dissatisfaction-models`.
-6. Add the root of the project folder and its subfolders to Path. To add a folder to Path,
-   from MATLAB's "Current Folder" pane, right-click the folder, then click "Add
-   to Path", then click "Selected Folder and Subfolders". Alternatively, you can
+6. Add project's root folder and its subfolders to Path. To add a folder to Path
+   from MATLAB, from the "Current Folder" pane, right-click the folder, hover over "Add
+   to Path", then click "Selected Folder and Subfolders". Alternatively,
    use the
    [addpath](https://www.mathworks.com/help/matlab/ref/addpath.html) function.
 
 ## To do
-- [ ] The values for neutral and dissatisfaction labels are set to 0 and 1,
-  respectively, throughout the code. These values should not be hardcoded.
-- [ ] Many functions rely on the `pwd` command. This explains why you must be in
-  the root of the project folder.
-- [ ] Since working from a Mac, I've changed back slashes to forward slashes.
-  There might be a way to keep the code compatible for all systems?
+
+- [ ] The values for neutral and dissatisfaction labels are hardcoded as 0 and 1,
+  respectively, throughout the code. Try defining them only once.
+- [ ] Many functions rely on the `pwd` command. This explains why the project's
+  root folder must be set as the working directory before running any scripts.
+  Avoid using `pwd` entirely if possible, and update the code to use relative
+  paths only.
+- [ ] Since working from a non-Windows machine, I've replaced all backslashes (`\`)
+  with forward slashes (`/`) in path strings. This means the code is not
+  currently compatible with Windows machines. Try making the code compatible for all systems.
 
 ## Annotations
 
