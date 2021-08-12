@@ -1,18 +1,20 @@
 % logisticRegressionDialog.m
 
 %% config
-useTestSet = false; %#ok<*UNRCH>
+useTestSet = true; %#ok<*UNRCH>
 
-%% train the first regressor
+%% train first regressor
+% used to predict dissatisfaction from prosody features
 prepareData;
 firstRegressor = fitlm(XtrainDialog, yTrainDialog);
 
-%% get the summary features for the second regressor's data
+%% get summary features for the second regressor
+% used to predict dissatisfaction from summary features
 fprintf('Get summary features for train set\n');
 [XsummaryTrain, yActualTrain] = getSummaryXYfromTracklist(tracklistTrainDialog, ...
     centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
 
-fprintf('Get summary features for compare set\n');
+fprintf('Get summary features for compare (dev or test) set\n');
 if useTestSet
     [XsummaryCompare, yActualCompare] = getSummaryXYfromTracklist(tracklistTestDialog, ...
     centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
@@ -27,14 +29,10 @@ y = [yActualTrain yActualCompare];
 r1 = corr(X);
 r2 = corr(X, y');
 
-%% feature selection
-XsummaryTrain = XsummaryTrain(:,[1 4 6]);
-XsummaryCompare = XsummaryCompare(:,[1 4 6]);
-
 %% train the second regressor
 secondRegressor = fitlm(XsummaryTrain, yActualTrain);
 
-%% predict on the compare data (dev set or test set)
+%% predict on the compare (dev or test) set
 yPred = predict(secondRegressor, XsummaryCompare);
 
 % the baseline always predicts dissatisfied (1 for positive class)
