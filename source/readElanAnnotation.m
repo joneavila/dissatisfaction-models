@@ -6,9 +6,11 @@ function annotationTable = readElanAnnotation(trackFilename, useFilter)
     [~, name, ~] = fileparts(trackFilename);
     annFilename = append(name, ".txt");
     annotationPathRelative = append('annotations/', annFilename);
+    
+    annotationPathFull = fullfile(pwd, annotationPathRelative);
 
     % throw error if the annotation file does not exist
-    if ~isfile(annotationPathRelative)
+    if ~isfile(annotationPathFull)
         ME = MException('readElanAnnotation:fileNotFound', ...
         'Annotation file %s not found', annotationPathRelative);
         throw(ME);
@@ -22,7 +24,6 @@ function annotationTable = readElanAnnotation(trackFilename, useFilter)
         'ConsecutiveDelimitersRule', 'join' ...
         );
     
-    annotationPathFull = fullfile(pwd, annotationPathRelative);
     annotationTable = readtable(annotationPathFull, importOptions);
     
     % if filter argument was passed, delete rows with labels other than "n"
@@ -31,5 +32,6 @@ function annotationTable = readElanAnnotation(trackFilename, useFilter)
         toDelete = ismember(annotationTable.label, ["n" "nn" "d" "dd"]);
         annotationTable(~toDelete, :) = [];
     end
+    
 end
 
