@@ -1,8 +1,3 @@
-# Modified from http://www.cs.utep.edu/nigel/stance/mono.fss.
-# Adds smoothed cepstral peak prominence (16 windows),  late 
-# (delayed) pitch peak (10 windows), and voiced-unvoiced intensity 
-# ratio (10 windows).
-
 ## volume 
 vo -3200 to -1600 self
 vo -1600 to  -800 self
