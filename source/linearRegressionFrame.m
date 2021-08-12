@@ -1,63 +1,71 @@
 % linearRegressionFrame.m
+% A frame-level linear regression model.
 
-%% config
-useTestSet = true; %#ok<*UNRCH>
-beta = 0.25;
+% configuration
+useTestSet = true; % to set the "compare" set as either the dev or test set
+beta = 0.25; % to calculate F-score
 
-%% train regressor
 prepareDataFrame;
+
+% train regressor
 regressor = fitlm(XtrainFrame, yTrainFrame);
 
+% depending on useTestSet, the "compare" set is either the dev or test set
 if useTestSet
     XcompareFrame = XtestFrame;
     yCompareFrame = yTestFrame;
 else
-    XcompareFrame = XdevFrame;
+    XcompareFrame = XdevFrame; %#ok<UNRCH>
     yCompareFrame = yDevFrame;
 end
 
-%% print out coefficient info
-coefficients = regressor.Coefficients.Estimate;
-coefficients(1) = []; % discard the first coefficient (intercept)
-[coefficientSorted, coeffSortedIdx] = sort(coefficients, 'descend');
-fprintf('Coefficients in descending order with format:\n');
+%% print coefficient info
+coeffs = regressor.Coefficients.Estimate;
+coeffs(1) = []; % discard the first coefficient (intercept)
+[coefficientSorted, coeffSortedIdx] = sort(coeffs, 'descend');
+fprintf('Coefficients sorted by value, descending order with format:\n');
 fprintf('coefficient number, value, feature abbreviation\n');
-for i = 1:length(coefficients)
+for i = 1:length(coeffs)
     coeffNum = coeffSortedIdx(i);
     coeffValue = coefficientSorted(i);
     
+    % there may be more features than specified in featureSpec
+    % for now there is only the extra time feature to worry about
+    % (see prepareDataFrame.m description)
     if coeffNum < length(featureSpec)
         coeffAbbrev = featureSpec(coeffNum).abbrev;
     else
-        coeffAbbrev = 'coeffAbbrev not found'; % to handle extra features (right now there is just the time feature)
+        coeffAbbrev = 'NA (not specified in featureSpec)'; 
     end
     
-    fprintf('%2d | %f | %s\n', coeffNum, coeffValue, coeffAbbrev);
+    fprintf('%3d | %+f | %s\n', coeffNum, coeffValue, coeffAbbrev);
 end
 
 %%  predict on the compare set
 yPred = predict(regressor, XcompareFrame);
 
-% the baseline always predicts dissatisfied (1 for positive class)
+% the baseline always predicts dissatisfied (assume 1 for dissatisfied)
 yBaseline = ones(size(yPred));
-%% try different thresholds to find the best Fscore when beta is 0.25
+
+%% try different thresholds to find the best F-score
 mse = @(actual, pred) (mean((actual - pred) .^ 2));
 
-thresholdMin = min(yPred); % TODO try setting to 0
-thresholdMax = max(yPred); % TODO try setting to 1
+% try thresholdNum thresholds between thresholdMin and thresholdMax
+thresholdMin = 0;
+thresholdMax = 1;
 thresholdNum = 500;
-thresholdStep = (thresholdMax - thresholdMin) / (thresholdNum - 1);
-thresholds = thresholdMin:thresholdStep:thresholdMax;
+thresholds = linspace(thresholdMin, thresholdMax, thresholdNum);
 
-varTypes = ["double", "double", "double", "double", "double"];
+% create a table to store results
+varTypes = {'double', 'double', 'double', 'double', 'double'};
 varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
 sz = [thresholdNum, length(varNames)];
 resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
     'VariableNames', varNames);
 
-fprintf('beta=%.2f, min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
-    beta, min(yPred), max(yPred), mean(yPred));
 
+
+% populate results table
 for thresholdNum = 1:length(thresholds)
     threshold = thresholds(thresholdNum);
     yPredAfterThreshold = yPred >= threshold;
@@ -70,11 +78,17 @@ for thresholdNum = 1:length(thresholds)
     resultTable{thresholdNum, 5} = recall;
 end
 
-% print stats
-fprintf('regressorRsquared=%.2f\n', regressor.Rsquared.adjusted);
+% print yPred stats
+fprintf('min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
+    min(yPred), max(yPred), mean(yPred));
+
+% print threshold stats
 [maxScore, maxScoreIdx] = max(resultTable{:, 3});
 bestThreshold = resultTable{maxScoreIdx, 1};
 fprintf('dissThreshold=%.3f\n', bestThreshold);
+
+% print regressor stats
+fprintf('regressorRsquared=%.2f\n', regressor.Rsquared.adjusted);
 regressorPrecision = resultTable{maxScoreIdx, 4};
 regressorRecall = resultTable{maxScoreIdx, 5};
 regressorMSE = resultTable{maxScoreIdx, 2};
