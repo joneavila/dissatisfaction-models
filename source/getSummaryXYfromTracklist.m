@@ -5,7 +5,7 @@ function [Xsummary, yActual] = getSummaryXYfromTracklist(tracklist, ...
     featureSpec = getfeaturespec('.\source\mono.fss');
     nTracks = size(tracklist, 2);
 
-    numSummaryFeatures = 5;
+    numSummaryFeatures = 3;
     Xsummary = zeros([nTracks numSummaryFeatures]);
     yActual = zeros(size(tracklist));
     
@@ -109,15 +109,7 @@ function [Xsummary, yActual] = getSummaryXYfromTracklist(tracklist, ...
         Xsummary(trackNum, 1) = nnz(dialogPred > DISS_THRESHOLD) / ...
             length(dialogPred);
         
-        % feature 2 - min of dialogPred
-        Xsummary(trackNum, 2) = min(dialogPred);
-        
-        % feature 3 - max of dialogPred
-        Xsummary(trackNum, 3) = max(dialogPred);
-        
-        % feature 4 - average of dialogPred
-        Xsummary(trackNum, 4) = mean(dialogPred);
-        
+        % feature 2 - range of dialogPred 
         % get the range of predictions, ignoring the first and last x%
         % frames to try to ignore outliers
         toIgnore = 0.01;
@@ -128,12 +120,10 @@ function [Xsummary, yActual] = getSummaryXYfromTracklist(tracklist, ...
         else
             dialogPredRange = range(dialogPred);
         end
+        Xsummary(trackNum, 2) = dialogPredRange;
         
-        % feature 5 - range of dialogPred 
-        Xsummary(trackNum, 5) = dialogPredRange;
-        
-        % feature 6 - standard deviation of dialogPred
-        Xsummary(trackNum, 6) = std(dialogPred);
+        % feature 3 - standard deviation of dialogPred
+        Xsummary(trackNum, 3) = std(dialogPred);
         
         plotDirectory = append(pwd, "\time-pred-plots\");
         if ~exist(plotDirectory, 'dir')
