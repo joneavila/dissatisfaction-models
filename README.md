@@ -1,62 +1,74 @@
 # Models for detecting dissatisfaction in spoken dialog
 
+Code and documentation for models used in ["Towards Continuous Estimation of
+Dissatisfaction in Spoken Dialog"](http://cs.utep.edu/nigel/dissatisfaction/).
 ## Set up
 
 1. Clone this repo or download it as a ZIP archive and extract it.
 2. Download [The UTEP Corpus of Dissatisfaction in Spoken
-   Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus). Copy or move the
-   `calls` folder, `annotations` folder, and `call-log.xlsx` to the
+   Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus). Copy or
+   move the `calls` folder, `annotations` folder, and `call-log.xlsx` to the
    project's root folder (`dissatisfaction-models`).
 3. Download [Midlevel Prosodic Features
-   Toolkit](https://github.com/nigelgward/midlevel). Copy or move the `midlevel-master`
-   folder to the project's root folder.
+   Toolkit](https://github.com/nigelgward/midlevel). Copy or move the
+   `midlevel-master` folder to the project's root folder.
 4. Install MathWorks' [Signal Processing
    Toolbox](https://www.mathworks.com/products/signal.html) and [Statistics and
    Machine Learning
    Toolbox](https://www.mathworks.com/products/statistics.html). To install
-   add-ons from MATLAB, from the "Home" menu tab, click "Add-Ons", then "Get Add-Ons".
-5. Open the project's root folder in
-   MATLAB. MATLAB's address field (below the ribbon menu) should end with `.../dissatisfaction-models`.
+   add-ons from MATLAB, from the "Home" menu tab, click "Add-Ons", then "Get
+   Add-Ons".
+5. Open the project's root folder in MATLAB. MATLAB's address field (below the
+   ribbon menu) should end with `.../dissatisfaction-models`.
 6. Add project's root folder and its subfolders to Path. To add a folder to Path
-   from MATLAB, from the "Current Folder" pane, right-click the folder, hover over "Add
-   to Path", then click "Selected Folder and Subfolders". Alternatively,
-   use the
+   from MATLAB, from the "Current Folder" pane, right-click the folder, hover
+   over "Add to Path", then click "Selected Folder and Subfolders".
+   Alternatively, use the
    [addpath](https://www.mathworks.com/help/matlab/ref/addpath.html) function.
 
-## To do
+## Notes
 
-- [ ] The values for neutral and dissatisfaction labels are hardcoded as 0 and 1,
-  respectively, throughout the code. Try defining them only once.
-- [ ] Many functions rely on the `pwd` command. This explains why the project's
-  root folder must be set as the working directory before running any scripts.
-  Avoid using `pwd` entirely if possible, and update the code to use relative
-  paths only.
-- [ ] Since working from a non-Windows machine, I've replaced all backslashes (`\`)
-  with forward slashes (`/`) in path strings. This means the code is not
-  currently compatible with Windows machines. Try making the code compatible for all systems.
-
-## Annotations
-
-Customer utterances were annotated for dissatisfaction (see [The UTEP Corpus of
-Dissatisfaction in Spoken
-Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus)). For the
-frame-level and utterance-level models below, the labels `n` and `nn` are read
-as 0 (negative class, neutral), `d` and `dd` are read as 1 (positive class,
+All models use [The UTEP Corpus of Dissatisfaction in Spoken
+Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus) and its
+metadata. In code, the dissatisfaction labels `n` and `nn` are read as 0
+(negative class, neutral), `d` and `dd` are read as 1 (positive class,
 dissatisfied), and all other labels are ignored.
 
-## linearRegressionFrame.m
+## [mono.fss](mono.fss) (feature specification file)
+
+All models share a set of features (125 total), found in [mono.fss](mono.fss).
+Modified from http://www.cs.utep.edu/nigel/stance/mono.fss, adds smoothed
+cepstral peak prominence (16 windows),  late (delayed) pitch peak (10 windows),
+and voiced-unvoiced intensity ratio (10 windows).
+
+## [prepareDataFrame.m](source/prepareDataFrame.m) and [prepareDataDialog.m](source/prepareDataFrame.m)
+
+Load the data used by the frame-level and dialog-level models, respectively.
+
+These scripts compute the features according to the feature specification file,
+plus a "time-into-dialog" feature. The "time-into-dialog" feature measures the
+time since the first utterance in seconds. This means predictors, e.g.
+`XtrainFrame`, will be one column wider than than expected.
+
+On first run, these scripts will compute the data and save `.mat` files to
+`data/frame-level` and `data/dialog-level`, respectively. On subsequent runs,
+they simply load these files. They assume "all or nothing", so to force them to
+recompute the data, you must delete their data directories (or their contents).
+
+## [linearRegressionFrame.m](source/linearRegressionFrame.m)
 
 A frame-level linear regression model.
 
-For training, validation, and test sets, see
+For a list of dialogs in the training, validation, and test sets, see
 [source/tracklists-frame](source/tracklists-frame). Each set comprises 6
 dialogs, half labeled as neutral and half labeled as dissatisfied. The
 dissatisfied dialogs typically have more neutral frames compared to dissatisfied
-frames, so the training data is balanced in code.
+frames, so the training data is balanced before it's used (see
+[source/prepareDataFrame.m](source/prepareDataFrame.m)).
 
-The learned coefficients are printed in descending order, with time feature
-included:
-
+The models' coefficients are printed in descending order. For a complete list of
+coefficients, see [link to output here]. Abbreviated list of coefficients:
+  
 ```none
 Coefficients in descending order with format:
 coefficient number, value, feature abbreviation
@@ -70,13 +82,14 @@ coefficient number, value, feature abbreviation
 71 | -0.068658 | se wp -400 -300
 108 | -0.089846 | se pd  +800  +1600
 30 | -0.104341 | se cr  +800  +1600
- 2 | -0.285015 | se vo -1600 -800
- ```
+2 | -0.285015 | se vo -1600 -800
+```
 
 The baseline always predicts a value of 1 for perfectly dissatisfied. Results on
-the test set, with time feature included:
+the test set:
 
 ```none
+Results on test set:
 beta=0.25, min(yPred)=-3.16, max(yPred)=5.53, mean(yPred)=0.53
 regressorRsquared=0.35
 dissThreshold=0.411
@@ -84,23 +97,17 @@ regressorFscore=0.58, regressorPrecision=0.57, regressorRecall=0.81, regressorMS
 baselineFscore=0.45, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.57
 ```
 
-```none
-beta=1.00, min(yPred)=-3.16, max(yPred)=5.53, mean(yPred)=0.53
-regressorRsquared=0.35
-dissThreshold=0.411
-regressorFscore=0.67, regressorPrecision=0.57, regressorRecall=0.81, regressorMSE=0.35
-baselineFscore=0.60, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.57
-```
+## [linearRegressionUtterance.m](source/linearRegressionUtterance.m)
 
-## linearRegressionUtterance.m
+An utterance-level linear regression model.
 
-An utterance-level linear regression model. For each utterance, this model
-predicts the mean, predicted dissatisfaction values for the frames in the
-utterance. This model shares the frame-level's training, validation, and test
-set.
+For an utterance, this model predicts its dissatisfaction as the mean prediction
+on all frames in the utterance. This model shares the frame-level model's
+training, validation, and test set (see
+[source/tracklists-frame](source/tracklists-frame)).
 
 The baseline always predicts a value of 1 for perfectly dissatisfied. Results on
-the test set, with time feature included:
+the test set:
 
 ```none
 beta=0.25, min(yPred)=-0.03, max(yPred)=1.30, mean(yPred)=0.50
@@ -109,25 +116,26 @@ regressorFscore=0.62, regressorPrecision=0.62, regressorRecall=0.73, regressorMS
 baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
 ```
 
-## linearRegressionDialog.m
+## [linearRegressionDialog.m](source/linearRegressionDialog.m)
 
 A dialog-level linear regression model.
 
-The first regressor is trained using the feature set specified in
-[mono.fss](mono.fss). The second regressor is trained using features based on
-the frame predictions of the first regressor. For each dialog, the summary
-features are: (1) the fraction of frames above a *dissatisfaction threshold*
-(see [linearRegressionFrame.m](#linearRegressionFrame.m)); (2) its minimum
-dissatisfaction value; (3) its maximum dissatisfaction value; (4) its mean
-dissatisfaction value; (5) the range of its dissatisfaction values; and (6) the
-standard deviation of its dissatisfaction values.
+This model uses two linear regressors. The first level regressor outputs
+dissatisfaction scores from prosody features. The second level regressor
+predicts dissatisfaction from summary features, calculated from the first level
+regressor's output. For training, validation, and test sets, see
+[source/tracklists-dialog](source/tracklists-dialog).
 
-The summary features are computed for each dialog from (including) the first
-non-`o` (out of character) utterance to (including) the last non-`o` utterance.
+For each dialog, the summary features are: (1) the fraction of frames above a
+"dissatisfaction threshold" (see comment in
+[linearRegressionFrame.m](#linearRegressionFrame.m)); (2) the range of its
+dissatisfaction scores; and (3) the standard deviation of its dissatisfaction
+scores. The summary features are computed for each dialog from (including) the
+first utterance labeled as neutral or dissatisfied to (including) the last
+utterance labeled as neutral or dissatisfied.
 
-For training, validation, and test sets, see
-[source/tracklists-dialog](source/tracklists-dialog). The baseline always
-predicts a value of 1 for perfectly dissatisfied. Results on the test set:
+The baseline always predicts a value of 1 for perfectly dissatisfied. Results on
+the test set:
 
 ```none
 beta=0.25, min(yPred)=0.20, max(yPred)=64.28, mean(yPred)=1.46
@@ -138,9 +146,10 @@ baselineFscore=0.52, baselinePrecision=0.51, baselineRecall=1.00, baselineMSE=0.
 
 ## calculateCorpusStats.m
 
-Print the number of neutral and dissatisfied frames in the dialog-level sets and
-print the number of neutral and dissatisfied utterances in the dialog-level
-sets. Output:
+Print the number of neutral and dissatisfied frames, and the number of neutral
+and dissatisfied utterances, in the dialog-level sets.
+
+Output:
 
 ```none
 train frames
@@ -157,18 +166,15 @@ test utterances
     neutral=256 (n=200, nn=56), dissatisfied=82 (d=63, dd=19)
 ```
 
-## calculateCorrelations.m
+## To do
 
-Calculates the point-biserial correlation coefficient (Pearson's correlation
-coefficient) for each feature and dissatisfaction. Results are stored in
-`resultsTable`. Head and tail of `resultsTable`:
-
-```none
-"se vo -3200 -1600"  0.0399280043250400  0.0399293872328013
-"se vo -1600 -800"   0.0628281694906818  0.0628303455464271
-"se vo -800 -400"    0.0181824412947618  0.0181830710442223
-...
-"se vr  +400  +800" -0.0222615534871412 -0.0222623245167907
-"se vr  +800  +1600"-0.0453442255170480 -0.0453457960158128
-"time into dialog"   0.309024112402498   0.309034815462936
-```
+- [ ] The values for neutral and dissatisfaction labels are hardcoded as 0 and
+  1, respectively, throughout the code. Try defining them only once.
+- [ ] Many functions rely on the `pwd` command. This explains why the project's
+  root folder must be set as the working directory before running any scripts.
+  Avoid using `pwd` entirely if possible, and update the code to use relative
+  paths only.
+- [ ] Since working from a non-Windows machine, I've replaced all backslashes
+  (`\`) with forward slashes (`/`) in path strings. This means the code is not
+  currently compatible with Windows machines. Try making the code compatible for
+  all systems.
