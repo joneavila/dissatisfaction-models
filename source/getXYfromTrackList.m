@@ -1,4 +1,4 @@
-function [X, y, frameTrackNums, frameTimes, frameUtterances] = ...
+function [X, y, frameTrackNums, frameUtterances] = ...
     getXYfromTrackList(trackList, featureSpec)
 % GETXYFROMTRACKLIST Features are stored in X, labels are stored in y. 
 % See also GETXYFROMFILE. If addTimeFeature is true, the last column of X
@@ -8,7 +8,6 @@ function [X, y, frameTrackNums, frameTimes, frameUtterances] = ...
     X = [];
     y = [];
     frameTrackNums = [];
-    frameTimes = [];
     frameUtterances = [];
     
     nTracks = size(trackList, 2);
@@ -22,21 +21,22 @@ function [X, y, frameTrackNums, frameTimes, frameUtterances] = ...
         % ignore if the annotation file does not exist
         [~, name, ~] = fileparts(track.filename);
         annFilename = append(name, ".txt");
-        annotationFilename = append(pwd, '\annotations\', annFilename);
+        annotationFilename = append(pwd, '/annotations/', annFilename);
         if ~isfile(annotationFilename)
             fprintf('\tannotation file not found, skip\n');
             continue
         end
     
-        [dialogX, dialogY, dialogFrameTimes, dialogFrameUtterances] = ...
+        [dialogX, dialogY, dialogFrameUtterances] = ...
             getXYfromFile(track.filename, featureSpec);
         
         % TODO appending is slow
         X = [X; dialogX];
         y = [y; dialogY];
-        trackNumsToAppend = ones([size(dialogX, 1) 1]) * trackNum;
+        
+        nFramesInDialog = size(dialogX, 1);
+        trackNumsToAppend = ones(nFramesInDialog, 1) * trackNum;
         frameTrackNums = [frameTrackNums; trackNumsToAppend];
-        frameTimes = [frameTimes; dialogFrameTimes];
         frameUtterances = [frameUtterances; dialogFrameUtterances];
     end
 end
