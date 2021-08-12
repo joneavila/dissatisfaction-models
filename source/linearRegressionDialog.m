@@ -1,63 +1,56 @@
-% logisticRegressionDialog.m
+% linearRegressionDialog.m
 
-%% config
-useTestSet = true; %#ok<*UNRCH>
+% configuration
+useTestSet = true; % to set the "compare" set as either the dev or test set
+beta = 0.25; % to calculate F-score
 
-%% train first regressor
-% used to predict dissatisfaction from prosody features
-prepareData;
+prepareDataDialog;
+
+%% train the first level regressor
 firstRegressor = fitlm(XtrainDialog, yTrainDialog);
 
 %% get summary features for the second regressor
-% used to predict dissatisfaction from summary features
-fprintf('Get summary features for train set\n');
+fprintf('Getting summary features for train set\n');
 [XsummaryTrain, yActualTrain] = getSummaryXYfromTracklist(tracklistTrainDialog, ...
-    centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
-
-fprintf('Get summary features for compare (dev or test) set\n');
+    firstRegressor);
+fprintf('Getting summary features for compare set\n');
 if useTestSet
     [XsummaryCompare, yActualCompare] = getSummaryXYfromTracklist(tracklistTestDialog, ...
-    centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
+        firstRegressor); %#ok<*UNRCH>
 else
     [XsummaryCompare, yActualCompare] = getSummaryXYfromTracklist(tracklistDevDialog, ...
-    centeringValuesDialog, scalingValuesDialog, firstRegressor, useTimeFeature);
+        firstRegressor);
 end
 
 %% calculate summary features correlations
-X = [XsummaryTrain; XsummaryCompare];
-y = [yActualTrain yActualCompare];
-r1 = corr(X);
-r2 = corr(X, y');
+% X = [XsummaryTrain; XsummaryCompare];
+% y = [yActualTrain yActualCompare];
+% r1 = corr(X);
+% r2 = corr(X, y');
 
-%% train the second regressor
+%% train second level regressor
 secondRegressor = fitlm(XsummaryTrain, yActualTrain);
 
-%% predict on the compare (dev or test) set
+%% predict on the compare set
 yPred = predict(secondRegressor, XsummaryCompare);
 
-% the baseline always predicts dissatisfied (1 for positive class)
-yBaseline = ones(size(yPred));
-
 %% try different dissatisfaction thresholds to find the best F-score
-% when beta is 0.25
 mse = @(actual, pred) (mean((actual - pred) .^ 2));
 
+% try thresholdNum thresholds between thresholdMin and thresholdMax
 thresholdMin = 0;
 thresholdMax = 1;
-thresholdNum = 50;
-thresholdStep = (thresholdMax - thresholdMin) / (thresholdNum - 1);
-thresholds = thresholdMin:thresholdStep:thresholdMax;
-beta = 0.25;
+thresholdNum = 500;
+thresholds = linspace(thresholdMin, thresholdMax, thresholdNum);
 
-varTypes = ["double", "double", "double", "double", "double"];
+% create a table to store results
+varTypes = {'double', 'double', 'double', 'double', 'double'};
 varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
 sz = [thresholdNum, length(varNames)];
 resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
     'VariableNames', varNames);
 
-fprintf('beta=%.2f, min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
-    beta, min(yPred), max(yPred), mean(yPred));
-
+% populate results table
 for thresholdNum = 1:length(thresholds)
     threshold = thresholds(thresholdNum);
     yPredAfterThreshold = yPred >= threshold;
@@ -70,6 +63,10 @@ for thresholdNum = 1:length(thresholds)
     resultTable{thresholdNum, 5} = recall;
 end
 
+% print yPred stats
+fprintf('beta=%.2f, min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
+    beta, min(yPred), max(yPred), mean(yPred));
+
 % print regressor stats
 [regressorFscore, scoreIdx] = max(resultTable{:, 3});
 bestThreshold = resultTable{scoreIdx, 1};
@@ -81,6 +78,8 @@ fprintf('regressorFscore=%.2f, regressorPrecision=%.2f, regressorRecall=%.2f, re
     regressorFscore, regressorPrecision, regressorRecall, regressorMSE);
 
 % print baseline stats
+% the baseline always predicts dissatisfied (1 for positive class)
+yBaseline = ones(size(yPred));
 yBaselineAfterThreshold = yBaseline >= bestThreshold;
 baselineMSE = mse(yBaselineAfterThreshold, yActualCompare');
 [baselineFscore, baselinePrecision, baselineRecall] = ...
