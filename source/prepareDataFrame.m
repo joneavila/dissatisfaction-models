@@ -1,6 +1,11 @@
 % prepareDataFrame.m
+% Loads data for frame-level models. Predictors (e.g. XtrainFrame) will
+% have an additional column for the time-into-dialog feature, not specified
+% in the feature specification file.
 
 dataDir = append(pwd, '/data/frame-level');
+
+featureSpec = getfeaturespec('./source/mono.fss');
 
 % create the data directory if it doesn't exist
 if ~exist(dataDir, 'dir')
@@ -18,7 +23,6 @@ if numFiles
         load(files(i).name)
     end
 else
-    featureSpec = getfeaturespec('./source/mono.fss');
     
     % compute train data
     tracklistTrainFrame = gettracklist('tracklists-frame/train.tl');
