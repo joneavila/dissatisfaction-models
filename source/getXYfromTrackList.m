@@ -21,13 +21,18 @@ function [X, y, frameTrackNums, frameUtterances] = ...
         [dialogX, dialogY, dialogFrameUtterances] = ...
             getXYfromFile(track.filename, featureSpec);
         
-        % TODO appending is slow
-        X = [X; dialogX];
-        y = [y; dialogY];
+        % skip this track if there are no useable annotations for it
+        if ~size(dialogX, 1)
+            continue
+        end
         
+        X = [X; dialogX]; % TODO appending is slow
+        y = [y; dialogY];
         nFramesInDialog = size(dialogX, 1);
         trackNumsToAppend = ones(nFramesInDialog, 1) * trackNum;
         frameTrackNums = [frameTrackNums; trackNumsToAppend];
         frameUtterances = [frameUtterances; dialogFrameUtterances];
+        
     end
+
 end
