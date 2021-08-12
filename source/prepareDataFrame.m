@@ -1,7 +1,5 @@
 % prepareDataFrame.m
-% Loads data for frame-level models. Predictors (e.g. XtrainFrame) will
-% have an additional column for the time-into-dialog feature, not specified
-% in the feature specification file.
+% Loads data for frame-level models.
 
 dataDir = append(pwd, '/data/frame-level');
 
