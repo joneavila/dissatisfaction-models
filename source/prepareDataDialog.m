@@ -1,200 +1,98 @@
-% prepareData.m
-%% load feature spec
-featureSpec = getfeaturespec('./source/mono.fss');
+% prepareDataDialog.m
 
-% for adding the time feature as the last column later
-% timeFeatureNum = length(featureSpec) + 1;
+dataDir = append(pwd, '/data/dialog-level');
 
-% %% load precomputed dialog-level train data if found, else compute it
-% disp('loading dialog-level data');
-% tracklistTrainDialog = gettracklist('tracklists-dialog\train.tl');
-% tracklistDevDialog = gettracklist('tracklists-dialog\dev.tl');
-% tracklistTestDialog = gettracklist('tracklists-dialog\test.tl');
-% 
-% if useTimeFeature
-%     dataDir = append(pwd, '\data\dialog-with-time'); 
-% else
-%     dataDir = append(pwd, '\data\dialog-without-time');
-% end
-% if ~exist(dataDir, 'dir')
-%     mkdir(dataDir)
-% end
-% 
-% % load precomupted train data, else compute it and save it for future runs
-% filenamesTrainDialog = ["timesTrainDialog" "trackNumsTrainDialog" ...
-%     "utterNumsTrainDialog" "XtrainDialog" "yTrainDialog"];
-% loadedAll = true;
-% for i = 1:length(filenamesTrainDialog)
-%     saveFilename = append(dataDir, '\', filenamesTrainDialog(i), '.mat');
-%     try
-%         load(saveFilename);
-%     catch
-%         loadedAll = false;
-%         break
-%     end
-% end
-% if ~loadedAll
-%     [XtrainDialog, yTrainDialog, trackNumsTrainDialog, timesTrainDialog, ...
-%         utterNumsTrainDialog] = getXYfromTrackList(tracklistTrainDialog, ...
-%         featureSpec);
+featureSpec = getfeaturespec('./source/mono-old.fss');
+
+tracklistTrainDialog = gettracklist('tracklists-dialog/train.tl');
+tracklistDevDialog = gettracklist('tracklists-dialog/dev.tl');
+tracklistTestDialog = gettracklist('tracklists-dialog/test.tl');
+
+% create the data directory if it doesn't exist
+if ~exist(dataDir, 'dir')
+    mkdir(dataDir) 
+end
+
+% count the number of .mat files in the data directory
+files = dir(append(dataDir, '/*.mat'));
+numFiles = size(files, 1);
+
+% load all .mat files if any are found, else recompute all data and save
+% them for future runs 
+if numFiles
+    for i = 1:numFiles
+        load(files(i).name)
+    end 
+else
+    %% compute train data
+    [XtrainDialog, yTrainDialog, trackNumsTrainDialog, ...
+        utterNumsTrainDialog] = getXYfromTrackList(tracklistTrainDialog, ...
+        featureSpec);
+    save(append(dataDir, '/train.mat'), 'XtrainDialog', 'yTrainDialog', ...
+        'trackNumsTrainDialog', 'utterNumsTrainDialog');
+
+%     % compute dev data
 %     
-%     if useTimeFeature
-%         % include timesDevFrame as a feature
-%         XtrainDialog(:, timeFeatureNum) = seconds(timesTrainDialog);
-%     end
-%     
-%     for i = 1:length(filenamesTrainDialog)
-%         saveFilename = append(dataDir, '\', filenamesTrainDialog(i), '.mat');
-%         save(saveFilename, filenamesTrainDialog(i));
-%     end
-% end
-% 
-% % load precomupted dev data, else compute it and save it for future runs
-% filenamesDevDialog = ["timesDevDialog" "trackNumsDevDialog" ...
-%     "utterNumsDevDialog" "XdevDialog" "yDevDialog"];
-% loadedAll = true;
-% for i = 1:length(filenamesDevDialog)
-%     saveFilename = append(dataDir, '\', filenamesDevDialog(i), '.mat');
-%     try
-%         load(saveFilename);
-%     catch
-%         loadedAll = false;
-%         break
-%     end
-% end
-% if ~loadedAll
-%     [XdevDialog, yDevDialog, trackNumsDevDialog, timesDevDialog, ...
+%     [XdevDialog, yDevDialog, trackNumsDevDialog, ...
 %         utterNumsDevDialog] = getXYfromTrackList(tracklistDevDialog, ...
 %         featureSpec);
 %     
-%     if useTimeFeature
-%         % include timesDevFrame as a feature
-%         XdevDialog(:, timeFeatureNum) = seconds(timesDevDialog);
-%     end
-%     
-%     for i = 1:length(filenamesDevDialog)
-%         saveFilename = append(dataDir, '\', filenamesDevDialog(i), '.mat');
-%         save(saveFilename, filenamesDevDialog(i));
-%     end
-% end
-% 
-% % load precomupted test data, else compute it and save it for future runs
-% filenamesTestDialog = ["timesTestDialog" "trackNumsTestDialog" ...
-%     "utterNumsTestDialog" "XtestDialog" "yTestDialog"];
-% loadedAll = true;
-% for i = 1:length(filenamesTestDialog)
-%     saveFilename = append(dataDir, '\', filenamesTestDialog(i), '.mat');
-%     try
-%         load(saveFilename);
-%     catch
-%         loadedAll = false;
-%         break
-%     end
-% end
-% if ~loadedAll
-%     [XtestDialog, yTestDialog, trackNumsTestDialog, timesTestDialog, ...
-%         utterNumsTestDialog] = getXYfromTrackList(tracklistTestDialog, ...
-%         featureSpec);
-%     
-%     if useTimeFeature
-%         % include timesTestFrame as a feature
-%         XtestDialog(:, timeFeatureNum) = seconds(timesTestDialog);
-%     end
-%     
-%     for i = 1:length(filenamesTestDialog)
-%         saveFilename = append(dataDir, '\', filenamesTestDialog(i), '.mat');
-%         save(saveFilename, filenamesTestDialog(i));
-%     end
-% end
-% 
-% if useTimeFeature
-%     dataDir = append(pwd, '\data\monsters-with-time'); 
-% else
-%     dataDir = append(pwd, '\data\monsters-without-time');
-% end
-% if ~exist(dataDir, 'dir')
-%     mkdir(dataDir)
-% end
-% 
-% %  load precomupted dialog-level train data, else compute it and save it for future runs
-% numTracks = length(tracklistTrainDialog);
-% for trackNum = 1:numTracks
-%     track = tracklistTrainDialog{trackNum};
-%     fprintf('\t[%d/%d] %s\n', trackNum, numTracks, track.filename);
-%     customerSide = 'l';
-%     trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
-%     [~, name, ~] = fileparts(track.filename);
-%     saveFilename = append(dataDir, '\', name, '.mat');
-%     try
-%         monster = load(saveFilename);
-%         monster = monster.monster;
-%     catch
-%         [~, monster] = makeTrackMonster(trackSpec, featureSpec);
-%         if useTimeFeature
-%             matchingTimes = [1:1:size(monster,1)]';
-%             matchingTimes = arrayfun(@(frameNum) ...
-%                 frameNumToTime(frameNum), matchingTimes);
-%             monster(:,timeFeatureNum) = seconds(matchingTimes);
-%         end
-%         save(saveFilename, 'monster');
-%     end
-% end    
-% 
-% %  load precomupted dialog-level dev data, else compute it and save it for future runs
-% numTracks = length(tracklistDevDialog);
-% for trackNum = 1:numTracks
-%     track = tracklistDevDialog{trackNum};
-%     fprintf('\t[%d/%d] %s\n', trackNum, numTracks, track.filename);
-%     customerSide = 'l';
-%     trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
-%     [~, name, ~] = fileparts(track.filename);
-%     saveFilename = append(dataDir, '\', name, '.mat');
-%     try
-%         monster = load(saveFilename);
-%         monster = monster.monster;
-%     catch
-%         [~, monster] = makeTrackMonster(trackSpec, featureSpec);
-%         if useTimeFeature
-%             matchingTimes = [1:1:size(monster,1)]';
-%             matchingTimes = arrayfun(@(frameNum) ...
-%                 frameNumToTime(frameNum), matchingTimes);
-%             monster(:,timeFeatureNum) = seconds(matchingTimes);
-%         end
-%         save(saveFilename, 'monster');
-%     end
-% end 
-% 
-% % load precomupted dialog-level test data, else compute it and save it for future runs
-% tracklistTestDialog = gettracklist('tracklists-dialog\test.tl');
-% numTracks = length(tracklistTestDialog);
-% for trackNum = 1:numTracks
-%     track = tracklistTestDialog{trackNum};
-%     fprintf('\t[%d/%d] %s\n', trackNum, numTracks, track.filename);
-%     customerSide = 'l';
-%     trackSpec = makeTrackspec(customerSide, track.filename, '.\calls\');
-%     [~, name, ~] = fileparts(track.filename);
-%     saveFilename = append(dataDir, '\', name, '.mat');
-%     try
-%         monster = load(saveFilename);
-%         monster = monster.monster;
-%     catch
-%         [~, monster] = makeTrackMonster(trackSpec, featureSpec);
-%         if useTimeFeature
-%             matchingTimes = [1:1:size(monster,1)]';
-%             matchingTimes = arrayfun(@(frameNum) ...
-%                 frameNumToTime(frameNum), matchingTimes);
-%             monster(:,timeFeatureNum) = seconds(matchingTimes);
-%         end
-%         save(saveFilename, 'monster');
-%     end
-% end    
-% 
-% %% normalize dialog-level data
-% % just to get the centering values and scaling values
-% 
-% % normalize train data
-% [XtrainDialog, centeringValuesDialog, scalingValuesDialog] = ...
-%     normalize(XtrainDialog);
+%     % save dev data
+%     save(append(dataDir, '/test.mat'), 'XdevDialog', ...
+%         'yDevDialog', 'trackNumsDevDialog', ...
+%         'utterNumsDevDialog');
+
+    %% compute test data
+    [XtestDialog, yTestDialog, trackNumsTestDialog, ...
+        utterNumsTestDialog] = getXYfromTrackList(tracklistTestDialog, ...
+        featureSpec);
+    save(append(dataDir, '/test.mat'), 'XtestDialog', 'yTestDialog', ...
+        'trackNumsTestDialog', 'utterNumsTestDialog');
+
+    %% normalize train data
+    % to get the centering values and scaling values for later
+    [XtrainDialog, centeringValuesDialog, scalingValuesDialog] = ...
+        normalize(XtrainDialog); 
+    
+    %% compute monsters
+    % computeMonsters(tracklistTrainDialog, centeringValuesDialog, ...
+    %     scalingValuesDialog, featureSpec, dataDir);
+    % computeMonsters(tracklistDevDialog);
+    computeMonsters(tracklistTestDialog, centeringValuesDialog, ...
+        scalingValuesDialog, featureSpec, dataDir);
+    
+end
+
+function computeMonsters(tracklist, normalizeCenteringValues, ...
+    normalizeScalingValues, featureSpec, dataDir)
+    numTracks = length(tracklist);
+    for trackNum = 1:numTracks
+        
+        track = tracklist{trackNum};
+        fprintf('\t[%d/%d] %s\n', trackNum, numTracks, track.filename);
+        customerSide = 'l';
+        trackSpec = makeTrackspec(customerSide, track.filename, './calls/');
+        [~, monster] = makeTrackMonster(trackSpec, featureSpec);
+        
+        % add time feature
+        % TODO avoid call to frameNumToTime
+        matchingTimes = [1:1:size(monster,1)]';
+        matchingTimes = arrayfun(@(frameNum) ...
+            frameNumToTime(frameNum), matchingTimes);
+        monster(:,end+1) = seconds(matchingTimes);
+        
+        % normalize using centering values and scaling values
+        % from normalizing train data
+        monster = normalize(monster, 'center', ...
+            normalizeCenteringValues, 'scale', normalizeScalingValues);
+    
+        [~, name, ~] = fileparts(track.filename);
+        saveFilename = append(dataDir, '/', name, '.mat');
+        
+        save(saveFilename, 'monster');
+
+    end   
+end
 
 %% clear unnecessary variables
 % clear dataDir
