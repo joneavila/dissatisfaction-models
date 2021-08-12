@@ -21,7 +21,7 @@ numFiles = size(files, 1);
 % them for future runs 
 if numFiles
     for i = 1:numFiles
-        load(files(i).name)
+        load(append(dataDir, '/', files(i).name))
     end 
 else
     %% compute train data
