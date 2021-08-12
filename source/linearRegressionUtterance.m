@@ -1,34 +1,36 @@
 % utteranceLevel.m
+% An utterance-level linear regression model.
 
-%% config
-useTestSet = true; %#ok<*UNRCH>
+% configuration
+useTestSet = true;
 
-%% train regressor
-prepareData;
+prepareDataFrame;
+
+%train regressor
 regressor = fitlm(XtrainFrame, yTrainFrame);
 
-%% predict on each utterance in the compare set
 if useTestSet
-    timesCompare = timesTestFrame;
-    tracklistCompare = tracklistTestFrame;
+    tracklistCompare = tracklistTestFrame; %#ok<*UNRCH>
     trackNumsCompare = trackNumsTestFrame;
     utterNumsCompare = utterNumsTestFrame;
     Xcompare = XtestFrame;
     yCompare = yTestFrame;
 else
-    % ...
+    tracklistCompare = tracklistDevFrame;
+    trackNumsCompare = trackNumsDevFrame;
+    utterNumsCompare = utterNumsDevFrame;
+    Xcompare = XdevFrame;
+    yCompare = yDevFrame;
 end
-
-numTracks = trackNumsCompare(end);
 
 yPred = [];
 yActual = [];
 
+numTracks = size(tracklistCompare, 2);
 for trackNum = 1:numTracks
     
     track = tracklistCompare{trackNum};
-    fprintf('[%d/%d]predicting on %s\n', trackNum, trackNum, ...
-        track.filename)
+    fprintf('\t[%d/%d] %s\n', trackNum, trackNum, track.filename)
     
     trackDataIdx = trackNumsCompare == trackNum;
     
@@ -38,9 +40,8 @@ for trackNum = 1:numTracks
     
     numUtter = utterNumsTrack(end);
  
-    % for each utterance, let the regressor 
-    % predict on each frame of the utterance then make the average of 
-    % those predictions the final prediction
+    % for each utterance, predict on each frame of the utterance then 
+    % make the average of those predictions the final prediction
     
     for utterNum = 1:numUtter
         
@@ -51,35 +52,34 @@ for trackNum = 1:numTracks
         utterPred = mean(predict(regressor, Xutter));
         utterActual = yUtter(end);
        
-        % appending is ugly but isn't too slow here
+        % TODO appending is ugly, but not too slow here
         yPred = [yPred; utterPred];
         yActual = [yActual; utterActual];
     end
 
 end
+
 %% baseline
-% this baseline always predicts 1 for perfectly dissatisfied and should be
-% compared with using precision
+% the baseline always predicts 1 for perfectly dissatisfied
 yBaseline = ones(size(yActual));
+
 %% try different dissatisfaction thresholds to find the best F-score
-% when beta is 0.25
 mse = @(actual, pred) (mean((actual - pred) .^ 2));
 
+% try thresholdNum thresholds between thresholdMin and thresholdMax
 thresholdMin = 0;
 thresholdMax = 1;
 thresholdNum = 500;
-thresholdStep = (thresholdMax - thresholdMin) / (thresholdNum - 1);
-thresholds = thresholdMin:thresholdStep:thresholdMax;
+thresholds = linspace(thresholdMin, thresholdMax, thresholdNum);
+
 beta = 0.25;
 
+% create a table to store results
 varTypes = ["double", "double", "double", "double", "double"];
 varNames = {'threshold', 'mse', 'fscore', 'precision', 'recall'};
 sz = [thresholdNum, length(varNames)];
 resultTable = table('Size', sz, 'VariableTypes', varTypes, ...
     'VariableNames', varNames);
-
-fprintf('beta=%.2f, min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
-    beta, min(yPred), max(yPred), mean(yPred));
 
 for thresholdNum = 1:length(thresholds)
     threshold = thresholds(thresholdNum);
@@ -92,6 +92,10 @@ for thresholdNum = 1:length(thresholds)
     resultTable{thresholdNum, 4} = precision;
     resultTable{thresholdNum, 5} = recall;
 end
+
+% print yPred stats
+fprintf('beta=%.2f, min(yPred)=%.2f, max(yPred)=%.2f, mean(yPred)=%.2f\n', ...
+    beta, min(yPred), max(yPred), mean(yPred));
 
 % print regressor stats
 [regressorFscore, scoreIdx] = max(resultTable{:, 3});
