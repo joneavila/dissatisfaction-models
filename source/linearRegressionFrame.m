@@ -12,10 +12,10 @@ regressor = fitlm(XtrainFrame, yTrainFrame);
 
 % depending on useTestSet, the "compare" set is either the dev or test set
 if useTestSet
-    XcompareFrame = XtestFrame;
+    XcompareFrame = XtestFrame; %#ok<*UNRCH>
     yCompareFrame = yTestFrame;
 else
-    XcompareFrame = XdevFrame; %#ok<UNRCH>
+    XcompareFrame = XdevFrame;
     yCompareFrame = yDevFrame;
 end
 
