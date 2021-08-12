@@ -2,6 +2,7 @@
 
 Code and documentation for models used in ["Towards Continuous Estimation of
 Dissatisfaction in Spoken Dialog"](http://cs.utep.edu/nigel/dissatisfaction/).
+
 ## Set up
 
 1. Clone this repo or download it as a ZIP archive and extract it.
@@ -60,40 +61,39 @@ recompute the data, you must delete their data directories (or their contents).
 A frame-level linear regression model.
 
 For a list of dialogs in the training, validation, and test sets, see
-[source/tracklists-frame](source/tracklists-frame). Each set comprises 6
+[tracklists-frame](source/tracklists-frame). Each set comprises 6
 dialogs, half labeled as neutral and half labeled as dissatisfied. The
 dissatisfied dialogs typically have more neutral frames compared to dissatisfied
 frames, so the training data is balanced before it's used (see
-[source/prepareDataFrame.m](source/prepareDataFrame.m)).
+[prepareDataFrame.m](source/prepareDataFrame.m)).
 
 The models' coefficients are printed in descending order. For a complete list of
-coefficients, see [link to output here]. Abbreviated list of coefficients:
-  
+coefficients, see [linearRegressionFrameCoeffs.txt](source/linearRegressionFrameCoeffs.txt). Abbreviated list of coefficients:
+
 ```none
-Coefficients in descending order with format:
+Coefficients sorted by value, descending order with format:
 coefficient number, value, feature abbreviation
-119 | 0.180460 | time into dialog
-78 | 0.156935 | se wp  +800  +1600
-59 | 0.148045 | se np -1600 -800
-45 | 0.136897 | se th -1600 -800
-16 | 0.126064 | se vo  +1600  +3200
-...
-76 | -0.065106 | se wp  +300  +400
-71 | -0.068658 | se wp -400 -300
-108 | -0.089846 | se pd  +800  +1600
-30 | -0.104341 | se cr  +800  +1600
-2 | -0.285015 | se vo -1600 -800
+125 | +0.180743 | NA (not specified in featureSpec)
+ 78 | +0.157677 | se wp  +800  +1600
+ 59 | +0.146737 | se np -1600 -800
+ 45 | +0.143111 | se th -1600 -800
+ 16 | +0.138269 | se vo  +1600  +3200
+ ...
+ 76 | -0.063752 | se wp  +300  +400
+ 71 | -0.070330 | se wp -400 -300
+114 | -0.090297 | se pd  +800  +1600
+ 30 | -0.108605 | se cr  +800  +1600
+  2 | -0.286484 | se vo -1600 -800
 ```
 
 The baseline always predicts a value of 1 for perfectly dissatisfied. Results on
 the test set:
 
 ```none
-Results on test set:
-beta=0.25, min(yPred)=-3.16, max(yPred)=5.53, mean(yPred)=0.53
+min(yPred)=-3.48, max(yPred)=4.85, mean(yPred)=0.54
+dissThreshold=0.429
 regressorRsquared=0.35
-dissThreshold=0.411
-regressorFscore=0.58, regressorPrecision=0.57, regressorRecall=0.81, regressorMSE=0.35
+regressorFscore=0.58, regressorPrecision=0.57, regressorRecall=0.81, regressorMSE=0.34
 baselineFscore=0.45, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.57
 ```
 
@@ -104,7 +104,7 @@ An utterance-level linear regression model.
 For an utterance, this model predicts its dissatisfaction as the mean prediction
 on all frames in the utterance. This model shares the frame-level model's
 training, validation, and test set (see
-[source/tracklists-frame](source/tracklists-frame)).
+[tracklists-frame](source/tracklists-frame)).
 
 The baseline always predicts a value of 1 for perfectly dissatisfied. Results on
 the test set:
@@ -116,6 +116,8 @@ regressorFscore=0.62, regressorPrecision=0.62, regressorRecall=0.73, regressorMS
 baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
 ```
 
+
+
 ## [linearRegressionDialog.m](source/linearRegressionDialog.m)
 
 A dialog-level linear regression model.
@@ -124,11 +126,11 @@ This model uses two linear regressors. The first level regressor outputs
 dissatisfaction scores from prosody features. The second level regressor
 predicts dissatisfaction from summary features, calculated from the first level
 regressor's output. For training, validation, and test sets, see
-[source/tracklists-dialog](source/tracklists-dialog).
+[tracklists-dialog](source/tracklists-dialog).
 
 For each dialog, the summary features are: (1) the fraction of frames above a
 "dissatisfaction threshold" (see comment in
-[linearRegressionFrame.m](#linearRegressionFrame.m)); (2) the range of its
+[linearRegressionFrame.m](source/linearRegressionFrame.m)); (2) the range of its
 dissatisfaction scores; and (3) the standard deviation of its dissatisfaction
 scores. The summary features are computed for each dialog from (including) the
 first utterance labeled as neutral or dissatisfied to (including) the last
@@ -138,13 +140,13 @@ The baseline always predicts a value of 1 for perfectly dissatisfied. Results on
 the test set:
 
 ```none
-beta=0.25, min(yPred)=0.20, max(yPred)=64.28, mean(yPred)=1.46
-dissThreshold=0.408
-regressorFscore=0.63, regressorPrecision=0.65, regressorRecall=0.39, regressorMSE=55.61
+beta=0.25, min(yPred)=-0.19, max(yPred)=2.33, mean(yPred)=0.36
+dissThreshold=0.168
+regressorFscore=0.55, regressorPrecision=0.54, regressorRecall=0.84, regressorMSE=0.39
 baselineFscore=0.52, baselinePrecision=0.51, baselineRecall=1.00, baselineMSE=0.49
 ```
 
-## calculateCorpusStats.m
+## [calculateCorpusStats.m](source/calculateCorpusStats.m)
 
 Print the number of neutral and dissatisfied frames, and the number of neutral
 and dissatisfied utterances, in the dialog-level sets.
@@ -178,3 +180,5 @@ test utterances
   (`\`) with forward slashes (`/`) in path strings. This means the code is not
   currently compatible with Windows machines. Try making the code compatible for
   all systems.
+- [ ] Add documentation for remaining key files, or indicate which files need
+  updating since August 11, 2021.
