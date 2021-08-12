@@ -110,13 +110,11 @@ The baseline always predicts a value of 1 for perfectly dissatisfied. Results on
 the test set:
 
 ```none
-beta=0.25, min(yPred)=-0.03, max(yPred)=1.30, mean(yPred)=0.50
-dissThreshold=0.571
-regressorFscore=0.62, regressorPrecision=0.62, regressorRecall=0.73, regressorMSE=0.25
+beta=0.25, min(yPred)=-0.02, max(yPred)=1.26, mean(yPred)=0.51
+dissThreshold=0.557
+regressorFscore=0.61, regressorPrecision=0.60, regressorRecall=0.82, regressorMSE=0.25
 baselineFscore=0.39, baselinePrecision=0.38, baselineRecall=1.00, baselineMSE=0.62
 ```
-
-
 
 ## [linearRegressionDialog.m](source/linearRegressionDialog.m)
 
