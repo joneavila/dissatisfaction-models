@@ -1,8 +1,10 @@
 # Models for estimating dissatisfaction in spoken dialog
 
-Code and documentation for models used in [*Nigel Ward, Jonathan Avila and Aaron Alarcon*, Towards Continuous Estimation of Dissatisfaction in Spoken Dialog](http://cs.utep.edu/nigel/dissatisfaction/).
+Code for models used in [*Nigel Ward, Jonathan Avila and Aaron Alarcon*, Towards
+Continuous Estimation of Dissatisfaction in Spoken
+Dialog](http://cs.utep.edu/nigel/dissatisfaction/).
 
-<p align="center">🙁 💬 🤖 📈</p>
+<p align="center">🙂 💬 🤖 📈</p>
 
 ## Set up
 
@@ -18,8 +20,8 @@ Code and documentation for models used in [*Nigel Ward, Jonathan Avila and Aaron
    Toolbox](https://www.mathworks.com/products/signal.html) and [Statistics and
    Machine Learning
    Toolbox](https://www.mathworks.com/products/statistics.html). To install
-   add-ons from MATLAB, from the "Home" menu tab, click "Add-Ons", then "Get
-   Add-Ons".
+   add-ons from MATLAB, from the "Home" menu tab, click "Add-Ons", then click
+   "Get Add-Ons".
 5. Open the project's root folder in MATLAB. MATLAB's address field (below the
    ribbon menu) should end with `.../dissatisfaction-models`.
 6. Add project's root folder and its subfolders to Path. To add a folder to Path
@@ -28,48 +30,80 @@ Code and documentation for models used in [*Nigel Ward, Jonathan Avila and Aaron
    Alternatively, use the
    [addpath](https://www.mathworks.com/help/matlab/ref/addpath.html) function.
 
-## Notes
-
-All models use [The UTEP Corpus of Dissatisfaction in Spoken
-Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus) and its
-metadata. In code, the dissatisfaction labels `n` and `nn` are read as 0
-(negative class, neutral), `d` and `dd` are read as 1 (positive class,
-dissatisfied), and all other labels are ignored.
-
 ## [mono.fss](mono.fss) (feature specification file)
 
-All models share a set of features (125 total), found in [mono.fss](mono.fss).
-Modified from http://www.cs.utep.edu/nigel/stance/mono.fss, adds smoothed
-cepstral peak prominence (16 windows),  late (delayed) pitch peak (10 windows),
-and voiced-unvoiced intensity ratio (10 windows).
+All models share a set of 125 features, specified in
+[mono.fss](source/mono.fss). This feature specification file is an extended
+version of the original (from the Midlevel Toolkit
+[here](https://github.com/nigelgward/midlevel/blob/master/flowtest/mono.fss)),
+adding features for *smoothed cepstral peak prominence*,  *late (delayed) pitch
+peak*, and *voiced-unvoiced intensity ratio*.
 
 ## [loadDataFrame.m](source/loadDataFrame.m) and [loadDataDialog.m](source/loadDataFrame.m)
 
 Load the data used by the frame-level and dialog-level models, respectively.
 
-These scripts compute the features according to the feature specification file,
-plus a "time-into-dialog" feature. The "time-into-dialog" feature measures the
-time since the first utterance in seconds. This means predictors, e.g.
-`XtrainFrame`, will be one column wider than than expected.
-
 On first run, these scripts will compute the data and save `.mat` files to
 `data/frame-level` and `data/dialog-level`, respectively. On subsequent runs,
-they simply load these files. They assume "all or nothing", so to force them to
-recompute the data, you must delete their data directories (or their contents).
+they simply load these files. They assume "all or nothing", so they will not
+recompute the data unless their data directories are empty or missing.
+
+The dissatisfied dialogs
+typically have more neutral frames compared to dissatisfied frames, so the
+training data is balanced before it's saved.
+
+These scripts call the [getXYfromFile.m](source/getXYfromFile.m) and [getXYfromTrackList.m](source/getXYfromTrackList.m) functions,
+described next. All models use [The UTEP Corpus of Dissatisfaction in Spoken
+Dialog](https://github.com/joneavila/utep-dissatisfaction-corpus) and its
+metadata. In code, the dissatisfaction labels `n` and `nn` are read as 0
+(negative class, neutral), `d` and `dd` are read as 1 (positive class,
+dissatisfied), and all other labels are ignored.
+
+## [getXYfromFile.m](source/getXYfromFile.m)
+
+```MATLAB
+function [X, y, frameUtterances, frameTimes] = getXYfromFile(filename, featureSpec)
+```
+
+This function computes the features specified in *featureSpec* for audio *filename*, plus a
+*time-into-dialog* feature. The *time-into-dialog* feature measures the time
+elapsed, in seconds, since the first utterance labeled as neutral or
+dissatisfied. This means predictors, *X*,
+are returned one column wider than than expected. Labels are returned in *y*.
+
+*frameUtterances* and *frameTimes* are used in failure analysis only. For frame *i*,
+*frameUtterances(i)* is the utterance the frame belongs to (*1..n*). For frame *i*, *frameTimes(i)* is the time elapsed, in seconds, since
+the first utterance labeled as neutral or dissatisfied.
+*frameTimes* is the same as the *time-into-dialog* feature in *X*, but unlike
+*X*, does not get normalized by the [loadDataFrame.m](source/loadDataFrame.m) or
+[loadDataDialog.m](source/loadDataFrame.m) scripts.
+
+## [getXYfromTrackList.m](source/getXYfromTrackList.m)
+
+```MATLAB
+function [X, y, frameTrackNums, frameUtterances, frameTimes] = getXYfromTrackList(trackList, featureSpec)
+```
+
+*X*, *y*,
+*frameUtterances*, and *frameTimes* hold the same information as described for
+the [getXYfromFile.m](source/getXYfromFile.m) function, concatenated for all
+tracks listed in *trackList*.
+
+*frameTrackNums* is used in failure analysis only. For
+frame *i*, *frameTrackNums(i)* is the track the frame belongs to.
 
 ## [linearRegressionFrame.m](source/linearRegressionFrame.m)
 
 A frame-level linear regression model.
 
 For a list of dialogs in the training, validation, and test sets, see
-[tracklists-frame](source/tracklists-frame). Each set comprises 6
-dialogs, half labeled as neutral and half labeled as dissatisfied. The
-dissatisfied dialogs typically have more neutral frames compared to dissatisfied
-frames, so the training data is balanced before it's used (see
-[loadDataFrame.m](source/loadDataFrame.m)).
+[tracklists-frame](source/tracklists-frame). Each set comprises 6 dialogs, half
+labeled as neutral and half labeled as dissatisfied.
 
 The models' coefficients are printed in descending order. For a complete list of
-coefficients, see [linearRegressionFrameCoeffs.txt](source/linearRegressionFrameCoeffs.txt). Abbreviated list of coefficients:
+coefficients, see
+[linearRegressionFrameCoeffs.txt](source/linearRegressionFrameCoeffs.txt).
+Abbreviated list of coefficients:
 
 ```none
 Coefficients sorted by value, descending order with format:
@@ -100,15 +134,14 @@ baselineFscore=0.45, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.
 
 ### Failure analysis
 
-The last part of the script creates audio clips for failure analysis. Audio
-clips (.wav)
-created from the model's best and worst predicted frames are stored in
-`failure-analysis/clips-ascend` and `failure-analysis/clips-descend`,
+The last section of the script creates audio clips for failure analysis. Audio
+clips (`.wav`) created from the model's best and worst predicted frames are stored
+in `failure-analysis/clips-ascend` and `failure-analysis/clips-descend`,
 respectively. (The smaller the difference between the model's prediction and
-actual dissatisfaction score, the better.) Each directory will contain a `clip-details.txt`, listing
-the clips in order and some more information for each: the filename of the
-original dialog, the time in seconds into the dialog the frame appears, the
-model's prediction, and actual dissatisfaction score.
+actual dissatisfaction score, the better.) Each directory will contain a
+`clip-details.txt`, listing the clips in order and more information for
+each: the filename of the original dialog, the time in seconds into the dialog,
+the model's predicted dissatisfaction score, and the actual dissatisfaction score.
 
 ## [linearRegressionUtterance.m](source/linearRegressionUtterance.m)
 
