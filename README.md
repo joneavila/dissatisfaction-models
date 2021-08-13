@@ -1,7 +1,6 @@
 # Models for detecting dissatisfaction in spoken dialog
 
-Code and documentation for models used in ["Towards Continuous Estimation of
-Dissatisfaction in Spoken Dialog"](http://cs.utep.edu/nigel/dissatisfaction/).
+Code and documentation for models used in [*Nigel Ward, Jonathan Avila and Aaron Alarcon*, Towards Continuous Estimation of Dissatisfaction in Spoken Dialog](http://cs.utep.edu/nigel/dissatisfaction/).
 
 ## Set up
 
@@ -96,6 +95,18 @@ regressorRsquared=0.35
 regressorFscore=0.58, regressorPrecision=0.57, regressorRecall=0.81, regressorMSE=0.34
 baselineFscore=0.45, baselinePrecision=0.43, baselineRecall=1.00, baselineMSE=0.57
 ```
+
+### Failure analysis
+
+The last part of the script creates audio clips for failure analysis. Audio
+clips (.wav)
+created from the model's best and worst predicted frames are stored in
+`failure-analysis/clips-ascend` and `failure-analysis/clips-descend`,
+respectively. (The smaller the difference between the model's prediction and
+actual dissatisfaction score, the better.) Each directory will contain a `clip-details.txt`, listing
+the clips in order and some more information for each: the filename of the
+original dialog, the time in seconds into the dialog the frame appears, the
+model's prediction, and actual dissatisfaction score.
 
 ## [linearRegressionUtterance.m](source/linearRegressionUtterance.m)
 
