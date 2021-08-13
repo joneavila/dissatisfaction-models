@@ -1,4 +1,4 @@
-% prepareDataFrame.m
+% loadDataFrame.m
 % Loads data for frame-level models.
 
 dataDir = append(pwd, '/data/frame-level');
