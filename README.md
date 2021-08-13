@@ -43,7 +43,7 @@ Modified from http://www.cs.utep.edu/nigel/stance/mono.fss, adds smoothed
 cepstral peak prominence (16 windows),  late (delayed) pitch peak (10 windows),
 and voiced-unvoiced intensity ratio (10 windows).
 
-## [prepareDataFrame.m](source/prepareDataFrame.m) and [prepareDataDialog.m](source/prepareDataFrame.m)
+## [loadDataFrame.m](source/loadDataFrame.m) and [loadDataDialog.m](source/loadDataFrame.m)
 
 Load the data used by the frame-level and dialog-level models, respectively.
 
@@ -66,7 +66,7 @@ For a list of dialogs in the training, validation, and test sets, see
 dialogs, half labeled as neutral and half labeled as dissatisfied. The
 dissatisfied dialogs typically have more neutral frames compared to dissatisfied
 frames, so the training data is balanced before it's used (see
-[prepareDataFrame.m](source/prepareDataFrame.m)).
+[loadDataFrame.m](source/loadDataFrame.m)).
 
 The models' coefficients are printed in descending order. For a complete list of
 coefficients, see [linearRegressionFrameCoeffs.txt](source/linearRegressionFrameCoeffs.txt). Abbreviated list of coefficients:

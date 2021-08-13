@@ -4,7 +4,7 @@
 % configuration
 useTestSet = true;
 
-prepareDataFrame;
+loadDataFrame;
 
 %train regressor
 regressor = fitlm(XtrainFrame, yTrainFrame);

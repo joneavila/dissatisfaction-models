@@ -5,7 +5,7 @@
 useTestSet = true; % to set the "compare" set as either the dev or test set
 beta = 0.25; % to calculate F-score
 
-prepareDataFrame;
+loadDataFrame;
 
 % train regressor
 regressor = fitlm(XtrainFrame, yTrainFrame);
@@ -38,8 +38,7 @@ for i = 1:length(coeffs)
     coeffValue = coefficientSorted(i);
     
     % there may be more features than specified in featureSpec
-    % for now there is only the extra time feature to worry about
-    % (see prepareDataFrame.m description)
+    % (for now there is only the extra time feature)
     if coeffNum <= length(featureSpec)
         coeffAbbrev = featureSpec(coeffNum).abbrev;
     else

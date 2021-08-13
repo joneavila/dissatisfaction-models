@@ -4,7 +4,7 @@
 useTestSet = true; % to set the "compare" set as either the dev or test set
 beta = 0.25; % to calculate F-score
 
-prepareDataDialog;
+loadDataDialog;
 
 %% train the first level regressor
 firstRegressor = fitlm(XtrainDialog, yTrainDialog);
