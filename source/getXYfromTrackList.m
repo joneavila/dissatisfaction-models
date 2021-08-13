@@ -1,14 +1,15 @@
-function [X, y, frameTrackNums, frameUtterances] = ...
+function [X, y, frameTrackNums, frameUtterances, frameTimes] = ...
     getXYfromTrackList(trackList, featureSpec)
 % GETXYFROMTRACKLIST Features are stored in X, labels are stored in y. 
-% See also GETXYFROMFILE. If addTimeFeature is true, the last column of X
-% is a time feature indicating the time of each frame relative its dialog.
-% It is a temporary solution while we decide whether to keep this feature.
+% For frame i, frameTrackNums is the frame's track number relative to 
+% trackList. See GETXYFROMFILE for more information on frameUtterances and
+% frameTimes. frameTrackNums is used in failure analysis only.
 
     X = [];
     y = [];
     frameTrackNums = [];
     frameUtterances = [];
+    frameTimes = [];
     
     nTracks = size(trackList, 2);
     for trackNum = 1:nTracks
@@ -18,7 +19,7 @@ function [X, y, frameTrackNums, frameUtterances] = ...
         fprintf('[%d/%d] Getting X and y for %s\n', trackNum, nTracks, ...
             track.filename);
     
-        [dialogX, dialogY, dialogFrameUtterances] = ...
+        [dialogX, dialogY, dialogFrameUtterances, dialogFrameTimes] = ...
             getXYfromFile(track.filename, featureSpec);
         
         % skip this track if there are no useable annotations for it
@@ -32,6 +33,7 @@ function [X, y, frameTrackNums, frameUtterances] = ...
         trackNumsToAppend = ones(nFramesInDialog, 1) * trackNum;
         frameTrackNums = [frameTrackNums; trackNumsToAppend];
         frameUtterances = [frameUtterances; dialogFrameUtterances];
+        frameTimes = [frameTimes; dialogFrameTimes];
         
     end
 
