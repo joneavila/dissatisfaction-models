@@ -1,4 +1,4 @@
-% prepareDataDialog.m
+% loadDataDialog.m
 
 dataDir = append(pwd, '/data/dialog-level');
 
@@ -31,16 +31,12 @@ else
     save(append(dataDir, '/train.mat'), 'XtrainDialog', 'yTrainDialog', ...
         'trackNumsTrainDialog', 'utterNumsTrainDialog');
 
-%     % compute dev data
-%     
-%     [XdevDialog, yDevDialog, trackNumsDevDialog, ...
-%         utterNumsDevDialog] = getXYfromTrackList(tracklistDevDialog, ...
-%         featureSpec);
-%     
-%     % save dev data
-%     save(append(dataDir, '/test.mat'), 'XdevDialog', ...
-%         'yDevDialog', 'trackNumsDevDialog', ...
-%         'utterNumsDevDialog');
+    %% compute dev data
+    [XdevDialog, yDevDialog, trackNumsDevDialog, ...
+        utterNumsDevDialog] = getXYfromTrackList(tracklistDevDialog, ...
+        featureSpec);
+    save(append(dataDir, '/dev.mat'), 'XdevDialog', 'yDevDialog', ...
+        'trackNumsDevDialog', 'utterNumsDevDialog');
 
     %% compute test data
     [XtestDialog, yTestDialog, trackNumsTestDialog, ...
@@ -55,9 +51,8 @@ else
         normalize(XtrainDialog); 
     
     %% compute monsters
-    % computeMonsters(tracklistTrainDialog, centeringValuesDialog, ...
-    %     scalingValuesDialog, featureSpec, dataDir);
-    % computeMonsters(tracklistDevDialog);
+    computeMonsters(tracklistDevDialog, centeringValuesDialog, ...
+        scalingValuesDialog, featureSpec, dataDir);
     computeMonsters(tracklistTestDialog, centeringValuesDialog, ...
         scalingValuesDialog, featureSpec, dataDir);
     
