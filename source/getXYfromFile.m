@@ -1,8 +1,12 @@
-function [X, y, frameUtterances] = getXYfromFile(filename, featureSpec)
+function [X, y, frameUtterances, frameTimes] = ...
+    getXYfromFile(filename, featureSpec)
 % GETXYFROMFILE Features are stored in X and labels are stored in y. 
-% For frame i, frameTimes(i) is the time in milliseconds and
-% frameUtterances(i) is the frame's utterance number (utterances in 
-% X are labeled 1..n)
+% For frame i, frameUtterances(i) is the frame's utterance number 
+% (utterances in X are labeled 1..n). For frame i, frameTimes(i) is the
+% frame's location in the dialog in seconds. 
+% frameUtterances and frameTimes is used in failure analysis only.
+% frameTimes *is* the "time-into-dialog" feature, but X, it does not get
+% normalized.
     
     % get the annotation filename from the dialog filename, assumin they 
     % have the same name, then get the annotation table
@@ -41,7 +45,9 @@ function [X, y, frameUtterances] = getXYfromFile(filename, featureSpec)
     frameTimes = arrayfun(@(frameNum) frameNumToTime(frameNum), ...
         matchingFrameNums);
     frameUtterances = frameUtterances(isFrameAnnotated);
+    
+    frameTimes = seconds(frameTimes);
 
-    X = [X seconds(frameTimes)];
+    X = [X frameTimes];
 
 end
