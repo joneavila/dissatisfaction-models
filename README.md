@@ -212,6 +212,25 @@ test utterances
     neutral=256 (n=200, nn=56), dissatisfied=82 (d=63, dd=19)
 ```
 
+## Files without documentation
+
+The following files are missing documentation or are simple enough to not need
+it:
+
+- `calculateAgreement.m`
+- `calculateCorrelations.m`
+- `calculateInterRaterAgreement.m`
+- `computeStdInfo.m`
+- `createHistogramFeatures.m`
+- `createHistogramsModelOutput.m`
+- `fScore.m`
+- `featureSelection.m`
+- `floatToLabel.m`
+- `frameNumToTime.m`
+- `getSummaryXYfromTrackList.m`
+- `labelToFloat.m`
+- `readElanAnnotation.m`
+  
 ## To do
 
 - [ ] The values for neutral and dissatisfaction labels are hardcoded as 0 and
@@ -225,4 +244,4 @@ test utterances
   currently compatible with Windows machines. Try making the code compatible for
   all systems.
 - [ ] Add documentation for remaining key files, or indicate which files need
-  updating since August 11, 2021.
+  updating since August 11, 2021. See ["Files without documentation"](#files-without-documentation) section.
