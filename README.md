@@ -1,8 +1,8 @@
 # Models for estimating dissatisfaction in spoken dialog
 
-Code for models used in [*Nigel Ward, Jonathan Avila and Aaron Alarcon*, Towards
-Continuous Estimation of Dissatisfaction in Spoken
-Dialog](http://cs.utep.edu/nigel/dissatisfaction/).
+Code for models used in [Nigel G. Ward, Jonathan E. Avila and Aaron M. Alarcon.
+"Towards Continuous Estimation of Dissatisfaction in Spoken
+Dialog."](http://cs.utep.edu/nigel/dissatisfaction/)
 
 <p align="center">🙂 💬 🤖 📈</p>
 
